@@ -19,6 +19,7 @@
 package com.github.projectflink.spark;
 
 
+import com.esotericsoftware.kryo.Kryo;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
@@ -27,6 +28,7 @@ import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.PairFunction;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.broadcast.Broadcast;
+import org.apache.spark.serializer.KryoRegistrator;
 import scala.Tuple2;
 
 import java.io.Serializable;
@@ -36,7 +38,6 @@ import java.util.List;
 
 public class KMeansArbitraryDimension {
 
-
 	public static void main(String[] args) {
 
 		if(!parseParameters(args)) {
@@ -44,6 +45,8 @@ public class KMeansArbitraryDimension {
 		}
 
 		SparkConf conf = new SparkConf().setAppName("KMeans").setMaster(master);
+		conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
+		conf.set("spark.kryo.registrator", KMeansKryoReg.class.getName());
 		JavaSparkContext sc = new JavaSparkContext(conf);
 
 		// ================================ Standard KMeans =============================

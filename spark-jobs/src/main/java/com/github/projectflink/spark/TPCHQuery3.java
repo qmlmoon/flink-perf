@@ -25,6 +25,8 @@ public class TPCHQuery3 {
 		}
 
 		SparkConf conf = new SparkConf().setAppName("TPCH 3").setMaster(master);
+		conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
+		conf.set("spark.kryo.registrator", TPCH3KryoReg.class.getName());
 		JavaSparkContext sc = new JavaSparkContext(conf);
 
 		// get input data

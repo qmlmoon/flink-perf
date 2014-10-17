@@ -8,7 +8,6 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFunction;
-import com.github.projectflink.spark.TPCH3KryoReg;
 import scala.Tuple2;
 import scala.Tuple3;
 

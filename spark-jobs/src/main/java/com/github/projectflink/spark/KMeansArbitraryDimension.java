@@ -27,7 +27,6 @@ import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.PairFunction;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.broadcast.Broadcast;
-import com.github.projectflink.spark.KMeansKryoReg;
 import scala.Tuple2;
 
 import java.io.Serializable;

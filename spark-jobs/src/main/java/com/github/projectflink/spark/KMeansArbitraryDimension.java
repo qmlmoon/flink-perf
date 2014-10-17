@@ -19,7 +19,6 @@
 package com.github.projectflink.spark;
 
 
-import com.esotericsoftware.kryo.Kryo;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
@@ -28,7 +27,7 @@ import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.PairFunction;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.broadcast.Broadcast;
-import org.apache.spark.serializer.KryoRegistrator;
+import com.github.projectflink.spark.KMeansKryoReg;
 import scala.Tuple2;
 
 import java.io.Serializable;

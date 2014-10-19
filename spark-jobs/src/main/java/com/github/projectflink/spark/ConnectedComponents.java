@@ -50,7 +50,7 @@ public class ConnectedComponents {
 			public Tuple2<Long, Long> call(Long t) throws Exception {
 				return new Tuple2<Long, Long>(t, t);
 			}
-		});
+		}).cache();
 
 
 		for (int i = 0; i < maxIterations; i++) {

@@ -101,6 +101,29 @@
 	<build>
 		<plugins>
 			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>FlinkBench</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>FlinkBench</classifier>
+
+							<includes>
+								<include>**/testPlan/WordCount*</include>
+								<include>**/testPlan/KMeansArbitraryDimension*</include>
+								<include>**/testPlan/PageRank*</include>
+								<include>**/testPlan/TPCHQuery3*</include>
+							</includes>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
   				<groupId>org.apache.maven.plugins</groupId>
   				<artifactId>maven-compiler-plugin</artifactId>
   				<configuration>

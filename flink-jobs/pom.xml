@@ -114,10 +114,7 @@
 							<classifier>FlinkBench</classifier>
 
 							<includes>
-								<include>**/testPlan/WordCount*</include>
-								<include>**/testPlan/KMeansArbitraryDimension*</include>
-								<include>**/testPlan/PageRank*</include>
-								<include>**/testPlan/TPCHQuery3*</include>
+								<include>**/testPlan/*</include>
 							</includes>
 						</configuration>
 					</execution>

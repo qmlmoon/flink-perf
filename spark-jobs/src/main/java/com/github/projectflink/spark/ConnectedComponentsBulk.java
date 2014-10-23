@@ -24,26 +24,19 @@ public class ConnectedComponentsBulk {
 		SparkConf conf = new SparkConf().setAppName("Connected Components Bulk Iteration").setMaster(master);
 		JavaSparkContext sc = new JavaSparkContext(conf);
 
-		JavaRDD<Long> vertices = sc
-			.textFile(verticesPath)
-			.map(new Function<String, Long>() {
-				@Override
-				public Long call(String s) throws Exception {
-					return Long.parseLong(s);
-				}
-			});
-
 		JavaPairRDD<Long, Long> edges = sc
 			.textFile(edgesPath)
 			.flatMapToPair(new UndirectedEdge())
 			.cache();
 
-		JavaPairRDD<Long, Long> result = vertices.mapToPair(new PairFunction<Long, Long, Long>() {
-			@Override
-			public Tuple2<Long, Long> call(Long t) throws Exception {
-				return new Tuple2<Long, Long>(t, t);
-			}
-		});
+		JavaPairRDD<Long, Long> result = edges
+			.groupByKey()
+			.mapToPair(new PairFunction<Tuple2<Long, Iterable<Long>>, Long, Long>() {
+				@Override
+				public Tuple2<Long, Long> call(Tuple2<Long, Iterable<Long>> t) throws Exception {
+					return new Tuple2<Long, Long>(t._1(), t._1());
+				}
+			});
 
 
 		for (int i = 0; i < maxIterations; i++) {
@@ -124,7 +117,6 @@ public class ConnectedComponentsBulk {
 	// *************************************************************************
 
 	private static String master = null;
-	private static String verticesPath = null;
 	private static String edgesPath = null;
 	private static String outputPath = null;
 	private static int maxIterations = 10;
@@ -132,14 +124,13 @@ public class ConnectedComponentsBulk {
 
 	private static boolean parseParameters(String[] programArguments) {
 		// parse input arguments
-		if(programArguments.length == 5) {
+		if(programArguments.length == 4) {
 			master = programArguments[0];
-			verticesPath = programArguments[1];
-			edgesPath = programArguments[2];
-			outputPath = programArguments[3];
-			maxIterations = Integer.parseInt(programArguments[4]);
+			edgesPath = programArguments[1];
+			outputPath = programArguments[2];
+			maxIterations = Integer.parseInt(programArguments[3]);
 		} else {
-			System.err.println("Usage: Connected Components <master> <vertices path> <edges path> <result path> <max iteration>");
+			System.err.println("Usage: Connected Components <master> <edges path> <result path> <max iteration>");
 			return false;
 		}
 		return true;

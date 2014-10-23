@@ -30,14 +30,6 @@ public class PageRank {
 		JavaSparkContext sc = new JavaSparkContext(conf);
 
 		// get input data
-		JavaRDD<Integer> pagesInput = sc
-			.textFile(pagesInputPath)
-			.map(new Function<String, Integer>() {
-				@Override
-				public Integer call(String s) throws Exception {
-					return Integer.parseInt(s);
-				}
-			});
 		JavaPairRDD<Integer, Integer> linksInput = sc
 			.textFile(linksInputPath)
 			.mapToPair(new PairFunction<String, Integer, Integer>() {
@@ -48,14 +40,13 @@ public class PageRank {
 				}
 			});
 
-		// assign initial rank to pages
-		JavaPairRDD<Integer, Double> pagesWithRanks = pagesInput
-			.mapToPair(new RankAssigner(numPages));
-
 		// build adjacency list from link input
 		JavaPairRDD<Integer, Iterable<Integer>> adjacencyListInput = linksInput
 			.groupByKey()
 			.cache();
+
+		// assign initial rank to pages
+		JavaPairRDD<Integer, Double> pagesWithRanks = adjacencyListInput.mapValues(new RankAssigner(numPages));
 
 		for (int i = 0; i < maxIterations; i++) {
 			// join pages with outgoing edges and distribute rank
@@ -92,7 +83,7 @@ public class PageRank {
 
 	}
 
-	public static final class RankAssigner implements PairFunction<Integer, Integer, Double> {
+	public static final class RankAssigner implements Function<Iterable<Integer>, Double> {
 
 		private double rank;
 
@@ -101,8 +92,8 @@ public class PageRank {
 		}
 
 		@Override
-		public Tuple2<Integer, Double> call(Integer a) throws Exception {
-			return new Tuple2<Integer, Double>(a, rank);
+		public Double call(Iterable<Integer> a) throws Exception {
+			return rank;
 		}
 	}
 
@@ -128,7 +119,6 @@ public class PageRank {
 
 
 	private static String master;
-	private static String pagesInputPath;
 	private static String linksInputPath;
 	private static String outputPath;
 	private static int numPages;
@@ -136,15 +126,14 @@ public class PageRank {
 
 	private static boolean parseParameters(String[] programArguments) {
 
-		if(programArguments.length == 6) {
+		if(programArguments.length == 5) {
 			master = programArguments[0];
-			pagesInputPath = programArguments[1];
-			linksInputPath = programArguments[2];
-			outputPath = programArguments[3];
-			numPages = Integer.parseInt(programArguments[4]);
-			maxIterations = Integer.parseInt(programArguments[5]);
+			linksInputPath = programArguments[1];
+			outputPath = programArguments[2];
+			numPages = Integer.parseInt(programArguments[3]);
+			maxIterations = Integer.parseInt(programArguments[4]);
 		} else {
-			System.err.println("Usage: PageRankBasic <master> <pages path> <links path> <output path> <num pages> <num iterations>");
+			System.err.println("Usage: PageRankBasic <master> <links path> <output path> <num pages> <num iterations>");
 			return false;
 		}
 		return true;

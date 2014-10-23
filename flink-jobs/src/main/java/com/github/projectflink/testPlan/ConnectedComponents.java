@@ -19,23 +19,25 @@
 
 package com.github.projectflink.testPlan;
 
+import org.apache.flink.api.common.ProgramDescription;
 import org.apache.flink.api.common.functions.*;
 import org.apache.flink.api.java.aggregation.Aggregations;
-import org.apache.flink.api.java.functions.FunctionAnnotation.ConstantFields;
 import org.apache.flink.api.java.functions.FunctionAnnotation.ConstantFieldsFirst;
 import org.apache.flink.api.java.functions.FunctionAnnotation.ConstantFieldsSecond;
-import org.apache.flink.api.java.operators.IterativeDataSet;
 import org.apache.flink.api.java.tuple.Tuple1;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.core.fs.FileSystem;
 import org.apache.flink.util.Collector;
 import org.apache.flink.api.java.DataSet;
+import org.apache.flink.api.java.operators.DeltaIteration;
 import org.apache.flink.api.java.ExecutionEnvironment;
 
-import java.util.Iterator;
-
+/**
+ * A copy from https://github.com/apache/incubator-flink. The only difference is that it doesn't
+ * require a vertex input file.
+ */
 @SuppressWarnings("serial")
-public class ConnectedComponentsBulk {
+public class ConnectedComponents implements ProgramDescription {
 
 	// *************************************************************************
 	//     PROGRAM
@@ -61,23 +63,24 @@ public class ConnectedComponentsBulk {
 			.groupBy(0)
 			.reduceGroup(new InitialValue());
 
-		IterativeDataSet<Tuple2<Long, Long>> solutionSet = verticesWithInitialId.iterate(maxIterations);
+		// open a delta iteration
+		DeltaIteration<Tuple2<Long, Long>, Tuple2<Long, Long>> iteration =
+			verticesWithInitialId.iterateDelta(verticesWithInitialId, maxIterations, 0);
+
 		// apply the step logic: join with the edges, select the minimum neighbor, update if the component of the candidate is smaller
-		DataSet<Tuple2<Long, Long>> delta = solutionSet.join(edges).where(0).equalTo(0).with(new NeighborWithComponentIDJoin())
+		DataSet<Tuple2<Long, Long>> changes = iteration.getWorkset().join(edges).where(0).equalTo(0).with(new NeighborWithComponentIDJoin())
 			.groupBy(0).aggregate(Aggregations.MIN, 1)
-			.join(solutionSet).where(0).equalTo(0)
+			.join(iteration.getSolutionSet()).where(0).equalTo(0)
 			.with(new ComponentIdFilter());
 
-		DataSet<Tuple2<Long, Long>> newSolutionSet = solutionSet.coGroup(delta).where(0).equalTo(0).with(new UpdateSolutionSet());
-
 		// close the delta iteration (delta and new workset are identical)
-		DataSet<Tuple2<Long, Long>> result = solutionSet.closeWith(newSolutionSet, delta);
+		DataSet<Tuple2<Long, Long>> result = iteration.closeWith(changes, changes);
 
 		// emit result
 		result.writeAsCsv(outputPath, "\n", " ", FileSystem.WriteMode.OVERWRITE);
 
 		// execute program
-		env.execute("Connected Components Bulk Iteration");
+		env.execute("Connected Components Example");
 	}
 
 	// *************************************************************************
@@ -95,6 +98,8 @@ public class ConnectedComponentsBulk {
 			c.collect(new Tuple2<Long, Long>(v, v));
 		}
 	}
+
+
 
 	/**
 	 * Undirected edges by emitting for each input edge the input edges itself and an inverted version.
@@ -139,25 +144,18 @@ public class ConnectedComponentsBulk {
 		}
 	}
 
-	public static final class UpdateSolutionSet implements CoGroupFunction<Tuple2<Long, Long>, Tuple2<Long, Long>, Tuple2<Long, Long>> {
 
-		@Override
-		public void coGroup(Iterable<Tuple2<Long, Long>> ss, Iterable<Tuple2<Long, Long>> delta, Collector<Tuple2<Long, Long>> c) throws Exception {
-			Iterator<Tuple2<Long, Long>> it1 = ss.iterator();
-			Iterator<Tuple2<Long, Long>> it2 = delta.iterator();
-			if (it2.hasNext()) {
-				c.collect(it2.next());
-			} else {
-				c.collect(it1.next());
-			}
-		}
+
+	@Override
+	public String getDescription() {
+		return "Parameters: <vertices-path> <edges-path> <result-path> <max-number-of-iterations>";
 	}
-
 
 	// *************************************************************************
 	//     UTIL METHODS
 	// *************************************************************************
 
+	private static boolean fileOutput = false;
 	private static String edgesPath = null;
 	private static String outputPath = null;
 	private static int maxIterations = 10;
@@ -175,5 +173,6 @@ public class ConnectedComponentsBulk {
 			return false;
 		}
 	}
-}
 
+
+}

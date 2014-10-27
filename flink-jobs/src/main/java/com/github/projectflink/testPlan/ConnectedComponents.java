@@ -21,6 +21,7 @@ package com.github.projectflink.testPlan;
 
 import org.apache.flink.api.common.ProgramDescription;
 import org.apache.flink.api.common.functions.*;
+import org.apache.flink.api.common.operators.base.JoinOperatorBase;
 import org.apache.flink.api.java.aggregation.Aggregations;
 import org.apache.flink.api.java.functions.FunctionAnnotation.ConstantFieldsFirst;
 import org.apache.flink.api.java.functions.FunctionAnnotation.ConstantFieldsSecond;
@@ -52,34 +53,42 @@ public class ConnectedComponents implements ProgramDescription {
 		// set up execution environment
 		ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 
-		DataSet<Tuple2<Long, Long>> edges = env
+		DataSet<Tuple2<Integer, Integer>> edges = env
 			.readCsvFile(edgesPath)
 			.fieldDelimiter(' ')
-			.types(Long.class, Long.class)
+			.types(Integer.class, Integer.class)
+			.flatMap(new UndirectEdge());
+
+		// bug to be fixed due to iteration head deadlock: https://issues.apache.org/jira/browse/FLINK-1088.
+		DataSet<Tuple2<Integer, Integer>> edges2 = env
+			.readCsvFile(edgesPath)
+			.fieldDelimiter(' ')
+			.types(Integer.class, Integer.class)
 			.flatMap(new UndirectEdge());
 
 		// assign the initial components (equal to the vertex id)
-		DataSet<Tuple2<Long, Long>> verticesWithInitialId = edges
+		DataSet<Tuple2<Integer, Integer>> verticesWithInitialId = edges2
 			.groupBy(0)
 			.reduceGroup(new InitialValue());
 
 		// open a delta iteration
-		DeltaIteration<Tuple2<Long, Long>, Tuple2<Long, Long>> iteration =
+		DeltaIteration<Tuple2<Integer, Integer>, Tuple2<Integer, Integer>> iteration =
 			verticesWithInitialId.iterateDelta(verticesWithInitialId, maxIterations, 0);
 
 		// apply the step logic: join with the edges, select the minimum neighbor, update if the component of the candidate is smaller
-		DataSet<Tuple2<Long, Long>> changes = iteration.getWorkset().join(edges).where(0).equalTo(0).with(new NeighborWithComponentIDJoin())
+		DataSet<Tuple2<Integer, Integer>> changes = iteration.getWorkset().join(edges).where(0).equalTo(0).with(new NeighborWithComponentIDJoin())
 			.groupBy(0).aggregate(Aggregations.MIN, 1)
 			.join(iteration.getSolutionSet()).where(0).equalTo(0)
 			.with(new ComponentIdFilter());
 
 		// close the delta iteration (delta and new workset are identical)
-		DataSet<Tuple2<Long, Long>> result = iteration.closeWith(changes, changes);
+		DataSet<Tuple2<Integer, Integer>> result = iteration.closeWith(changes, changes);
 
 		// emit result
 		result.writeAsCsv(outputPath, "\n", " ", FileSystem.WriteMode.OVERWRITE);
 
 		// execute program
+//		System.out.println(env.getExecutionPlan());
 		env.execute("Connected Components Example");
 	}
 
@@ -90,12 +99,12 @@ public class ConnectedComponents implements ProgramDescription {
 	/**
 	 * Function that initial the connected components with its own id.
 	 */
-	public static final class InitialValue implements GroupReduceFunction<Tuple2<Long, Long>, Tuple2<Long, Long>> {
+	public static final class InitialValue implements GroupReduceFunction<Tuple2<Integer, Integer>, Tuple2<Integer, Integer>> {
 
 		@Override
-		public void reduce(Iterable<Tuple2<Long, Long>> t, Collector<Tuple2<Long, Long>> c) throws Exception {
-			Long v = t.iterator().next().f0;
-			c.collect(new Tuple2<Long, Long>(v, v));
+		public void reduce(Iterable<Tuple2<Integer, Integer>> t, Collector<Tuple2<Integer, Integer>> c) throws Exception {
+			Integer v = t.iterator().next().f0;
+			c.collect(new Tuple2<Integer, Integer>(v, v));
 		}
 	}
 
@@ -104,11 +113,11 @@ public class ConnectedComponents implements ProgramDescription {
 	/**
 	 * Undirected edges by emitting for each input edge the input edges itself and an inverted version.
 	 */
-	public static final class UndirectEdge implements FlatMapFunction<Tuple2<Long, Long>, Tuple2<Long, Long>> {
-		Tuple2<Long, Long> invertedEdge = new Tuple2<Long, Long>();
+	public static final class UndirectEdge implements FlatMapFunction<Tuple2<Integer, Integer>, Tuple2<Integer, Integer>> {
+		Tuple2<Integer, Integer> invertedEdge = new Tuple2<Integer, Integer>();
 
 		@Override
-		public void flatMap(Tuple2<Long, Long> edge, Collector<Tuple2<Long, Long>> out) {
+		public void flatMap(Tuple2<Integer, Integer> edge, Collector<Tuple2<Integer, Integer>> out) {
 			invertedEdge.f0 = edge.f1;
 			invertedEdge.f1 = edge.f0;
 			out.collect(edge);
@@ -123,21 +132,21 @@ public class ConnectedComponents implements ProgramDescription {
 	 */
 	@ConstantFieldsFirst("1 -> 0")
 	@ConstantFieldsSecond("1 -> 1")
-	public static final class NeighborWithComponentIDJoin implements JoinFunction<Tuple2<Long, Long>, Tuple2<Long, Long>, Tuple2<Long, Long>> {
+	public static final class NeighborWithComponentIDJoin implements JoinFunction<Tuple2<Integer, Integer>, Tuple2<Integer, Integer>, Tuple2<Integer, Integer>> {
 
 		@Override
-		public Tuple2<Long, Long> join(Tuple2<Long, Long> vertexWithComponent, Tuple2<Long, Long> edge) {
-			return new Tuple2<Long, Long>(edge.f1, vertexWithComponent.f1);
+		public Tuple2<Integer, Integer> join(Tuple2<Integer, Integer> vertexWithComponent, Tuple2<Integer, Integer> edge) {
+			return new Tuple2<Integer, Integer>(edge.f1, vertexWithComponent.f1);
 		}
 	}
 
 
 
 	@ConstantFieldsFirst("0")
-	public static final class ComponentIdFilter implements FlatJoinFunction<Tuple2<Long, Long>, Tuple2<Long, Long>, Tuple2<Long, Long>> {
+	public static final class ComponentIdFilter implements FlatJoinFunction<Tuple2<Integer, Integer>, Tuple2<Integer, Integer>, Tuple2<Integer, Integer>> {
 
 		@Override
-		public void join(Tuple2<Long, Long> candidate, Tuple2<Long, Long> old, Collector<Tuple2<Long, Long>> out) {
+		public void join(Tuple2<Integer, Integer> candidate, Tuple2<Integer, Integer> old, Collector<Tuple2<Integer, Integer>> out) {
 			if (candidate.f1 < old.f1) {
 				out.collect(candidate);
 			}

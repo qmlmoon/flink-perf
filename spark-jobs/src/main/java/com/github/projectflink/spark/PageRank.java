@@ -1,10 +1,8 @@
 package com.github.projectflink.spark;
 
 
-import com.google.common.collect.Iterables;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
-import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
@@ -13,6 +11,7 @@ import org.apache.spark.api.java.function.PairFunction;
 import scala.Tuple2;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public class PageRank {
@@ -41,9 +40,19 @@ public class PageRank {
 			});
 
 		// build adjacency list from link input
-		JavaPairRDD<Integer, Iterable<Integer>> adjacencyListInput = linksInput
-			.groupByKey()
-			.cache();
+		JavaPairRDD<Integer, Integer[]> adjacencyListInput = linksInput
+			.groupByKey(200)
+			.mapValues(new Function<Iterable<Integer>, Integer[]>() {
+				@Override
+				public Integer[] call(Iterable<Integer> t) throws Exception {
+					ArrayList<Integer> link = new ArrayList<Integer>();
+					Iterator<Integer> it = t.iterator();
+					while (it.hasNext()) {
+						link.add(it.next());
+					}
+					return link.toArray(new Integer[link.size()]);
+				}
+			}).cache();
 
 		// assign initial rank to pages
 		JavaPairRDD<Integer, Double> pagesWithRanks = adjacencyListInput.mapValues(new RankAssigner(numPages));
@@ -53,11 +62,11 @@ public class PageRank {
 			JavaPairRDD<Integer, Double> rankToDistribute = pagesWithRanks
 				.join(adjacencyListInput)
 				.values()
-				.flatMapToPair(new PairFlatMapFunction<Tuple2<Double, Iterable<Integer>>, Integer, Double>() {
+				.flatMapToPair(new PairFlatMapFunction<Tuple2<Double, Integer[]>, Integer, Double>() {
 					@Override
-					public Iterable<Tuple2<Integer, Double>> call(Tuple2<Double, Iterable<Integer>> t) throws Exception {
+					public Iterable<Tuple2<Integer, Double>> call(Tuple2<Double, Integer[]> t) throws Exception {
 						List<Tuple2<Integer, Double>> rankDelta = new ArrayList<Tuple2<Integer, Double>>();
-						int urlCount = Iterables.size(t._2());
+						int urlCount = t._2().length;
 
 						double r = t._1() / urlCount;
 
@@ -83,7 +92,7 @@ public class PageRank {
 
 	}
 
-	public static final class RankAssigner implements Function<Iterable<Integer>, Double> {
+	public static final class RankAssigner implements Function<Integer[], Double> {
 
 		private double rank;
 
@@ -92,7 +101,7 @@ public class PageRank {
 		}
 
 		@Override
-		public Double call(Iterable<Integer> a) throws Exception {
+		public Double call(Integer[] a) throws Exception {
 			return rank;
 		}
 	}

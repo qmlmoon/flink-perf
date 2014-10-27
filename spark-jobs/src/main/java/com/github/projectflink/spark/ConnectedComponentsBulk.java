@@ -3,7 +3,6 @@ package com.github.projectflink.spark;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
-import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
@@ -24,27 +23,27 @@ public class ConnectedComponentsBulk {
 		SparkConf conf = new SparkConf().setAppName("Connected Components Bulk Iteration").setMaster(master);
 		JavaSparkContext sc = new JavaSparkContext(conf);
 
-		JavaPairRDD<Long, Long> edges = sc
+		JavaPairRDD<Integer, Integer> edges = sc
 			.textFile(edgesPath)
 			.flatMapToPair(new UndirectedEdge())
 			.cache();
 
-		JavaPairRDD<Long, Long> result = edges
+		JavaPairRDD<Integer, Integer> result = edges
 			.groupByKey()
-			.mapToPair(new PairFunction<Tuple2<Long, Iterable<Long>>, Long, Long>() {
+			.mapToPair(new PairFunction<Tuple2<Integer, Iterable<Integer>>, Integer, Integer>() {
 				@Override
-				public Tuple2<Long, Long> call(Tuple2<Long, Iterable<Long>> t) throws Exception {
-					return new Tuple2<Long, Long>(t._1(), t._1());
+				public Tuple2<Integer, Integer> call(Tuple2<Integer, Iterable<Integer>> t) throws Exception {
+					return new Tuple2<Integer, Integer>(t._1(), t._1());
 				}
 			});
 
 
 		for (int i = 0; i < maxIterations; i++) {
-			JavaPairRDD<Long, Long> delta = result.join(edges)
-				.mapToPair(new PairFunction<Tuple2<Long, Tuple2<Long, Long>>, Long, Long>() {
+			JavaPairRDD<Integer, Integer> delta = result.join(edges)
+				.mapToPair(new PairFunction<Tuple2<Integer, Tuple2<Integer, Integer>>, Integer, Integer>() {
 					@Override
-					public Tuple2<Long, Long> call(Tuple2<Long, Tuple2<Long, Long>> t) throws Exception {
-						return new Tuple2<Long, Long>(t._2()._2(), t._2()._1());
+					public Tuple2<Integer, Integer> call(Tuple2<Integer, Tuple2<Integer, Integer>> t) throws Exception {
+						return new Tuple2<Integer, Integer>(t._2()._2(), t._2()._1());
 					}
 				})
 				.reduceByKey(new SmallestNeighbor())
@@ -64,49 +63,49 @@ public class ConnectedComponentsBulk {
 
 	}
 
-	public static final class UndirectedEdge implements PairFlatMapFunction<String, Long, Long> {
+	public static final class UndirectedEdge implements PairFlatMapFunction<String, Integer, Integer> {
 		@Override
-		public Iterable<Tuple2<Long, Long>> call(String s) throws Exception {
+		public Iterable<Tuple2<Integer, Integer>> call(String s) throws Exception {
 			String [] line = s.split(" ");
-			Long v1 = Long.parseLong(line[0]);
-			Long v2 = Long.parseLong(line[1]);
-			List<Tuple2<Long, Long>> result = new ArrayList<Tuple2<Long, Long>>();
-			result.add(new Tuple2<Long, Long>(v1, v2));
-			result.add(new Tuple2<Long, Long>(v2, v1));
+			Integer v1 = Integer.parseInt(line[0]);
+			Integer v2 = Integer.parseInt(line[1]);
+			List<Tuple2<Integer, Integer>> result = new ArrayList<Tuple2<Integer, Integer>>();
+			result.add(new Tuple2<Integer, Integer>(v1, v2));
+			result.add(new Tuple2<Integer, Integer>(v2, v1));
 			return result;
 		}
 	}
 
-	public static final class SmallestNeighbor implements Function2<Long, Long, Long> {
+	public static final class SmallestNeighbor implements Function2<Integer, Integer, Integer> {
 		@Override
-		public Long call(Long t1, Long t2) throws Exception {
+		public Integer call(Integer t1, Integer t2) throws Exception {
 			return Math.min(t1, t2);
 		}
 	}
 
-	public static final class LessThanCurrent implements Function<Tuple2<Long, Tuple2<Long, Long>>, Boolean> {
+	public static final class LessThanCurrent implements Function<Tuple2<Integer, Tuple2<Integer, Integer>>, Boolean> {
 		@Override
-		public Boolean call(Tuple2<Long, Tuple2<Long, Long>> t) throws Exception {
+		public Boolean call(Tuple2<Integer, Tuple2<Integer, Integer>> t) throws Exception {
 			return t._2()._1().compareTo(t._2()._2()) < 0;
 		}
 	}
 
-	public static final class NextRoundUpdate implements PairFunction<Tuple2<Long, Tuple2<Long, Long>>, Long, Long> {
+	public static final class NextRoundUpdate implements PairFunction<Tuple2<Integer, Tuple2<Integer, Integer>>, Integer, Integer> {
 		@Override
-		public Tuple2<Long, Long> call(Tuple2<Long, Tuple2<Long, Long>> t) throws Exception {
-			return new Tuple2<Long, Long>(t._1(), t._2()._1());
+		public Tuple2<Integer, Integer> call(Tuple2<Integer, Tuple2<Integer, Integer>> t) throws Exception {
+			return new Tuple2<Integer, Integer>(t._1(), t._2()._1());
 		}
 	}
 
-	public static final class UpdateResult implements PairFunction<Tuple2<Long, Tuple2<Iterable<Long>, Iterable<Long>>>, Long, Long> {
+	public static final class UpdateResult implements PairFunction<Tuple2<Integer, Tuple2<Iterable<Integer>, Iterable<Integer>>>, Integer, Integer> {
 		@Override
-		public Tuple2<Long, Long> call(Tuple2<Long, Tuple2<Iterable<Long>, Iterable<Long>>> t) throws Exception {
-			Iterator<Long> t1 = t._2()._1().iterator();
-			Iterator<Long> t2 = t._2()._2().iterator();
+		public Tuple2<Integer, Integer> call(Tuple2<Integer, Tuple2<Iterable<Integer>, Iterable<Integer>>> t) throws Exception {
+			Iterator<Integer> t1 = t._2()._1().iterator();
+			Iterator<Integer> t2 = t._2()._2().iterator();
 			if (t2.hasNext()) {
-				return new Tuple2<Long, Long>(t._1(), Math.min(t1.next(), t2.next()));
+				return new Tuple2<Integer, Integer>(t._1(), Math.min(t1.next(), t2.next()));
 			} else {
-				return new Tuple2<Long, Long>(t._1(), t1.next());
+				return new Tuple2<Integer, Integer>(t._1(), t1.next());
 			}
 		}
 	}

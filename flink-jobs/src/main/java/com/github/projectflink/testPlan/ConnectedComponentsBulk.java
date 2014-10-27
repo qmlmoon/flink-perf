@@ -50,28 +50,34 @@ public class ConnectedComponentsBulk {
 		// set up execution environment
 		ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 
-		DataSet<Tuple2<Long, Long>> edges = env
+		DataSet<Tuple2<Integer, Integer>> edges = env
 			.readCsvFile(edgesPath)
 			.fieldDelimiter(' ')
-			.types(Long.class, Long.class)
+			.types(Integer.class, Integer.class)
+			.flatMap(new UndirectEdge());
+
+		DataSet<Tuple2<Integer, Integer>> edges2 = env
+			.readCsvFile(edgesPath)
+			.fieldDelimiter(' ')
+			.types(Integer.class, Integer.class)
 			.flatMap(new UndirectEdge());
 
 		// assign the initial components (equal to the vertex id)
-		DataSet<Tuple2<Long, Long>> verticesWithInitialId = edges
+		DataSet<Tuple2<Integer, Integer>> verticesWithInitialId = edges2
 			.groupBy(0)
 			.reduceGroup(new InitialValue());
 
-		IterativeDataSet<Tuple2<Long, Long>> solutionSet = verticesWithInitialId.iterate(maxIterations);
+		IterativeDataSet<Tuple2<Integer, Integer>> solutionSet = verticesWithInitialId.iterate(maxIterations);
 		// apply the step logic: join with the edges, select the minimum neighbor, update if the component of the candidate is smaller
-		DataSet<Tuple2<Long, Long>> delta = solutionSet.join(edges).where(0).equalTo(0).with(new NeighborWithComponentIDJoin())
+		DataSet<Tuple2<Integer, Integer>> delta = solutionSet.join(edges).where(0).equalTo(0).with(new NeighborWithComponentIDJoin())
 			.groupBy(0).aggregate(Aggregations.MIN, 1)
 			.join(solutionSet).where(0).equalTo(0)
 			.with(new ComponentIdFilter());
 
-		DataSet<Tuple2<Long, Long>> newSolutionSet = solutionSet.coGroup(delta).where(0).equalTo(0).with(new UpdateSolutionSet());
+		DataSet<Tuple2<Integer, Integer>> newSolutionSet = solutionSet.coGroup(delta).where(0).equalTo(0).with(new UpdateSolutionSet());
 
 		// close the delta iteration (delta and new workset are identical)
-		DataSet<Tuple2<Long, Long>> result = solutionSet.closeWith(newSolutionSet, delta);
+		DataSet<Tuple2<Integer, Integer>> result = solutionSet.closeWith(newSolutionSet, delta);
 
 		// emit result
 		result.writeAsCsv(outputPath, "\n", " ", FileSystem.WriteMode.OVERWRITE);
@@ -87,23 +93,23 @@ public class ConnectedComponentsBulk {
 	/**
 	 * Function that initial the connected components with its own id.
 	 */
-	public static final class InitialValue implements GroupReduceFunction<Tuple2<Long, Long>, Tuple2<Long, Long>> {
+	public static final class InitialValue implements GroupReduceFunction<Tuple2<Integer, Integer>, Tuple2<Integer, Integer>> {
 
 		@Override
-		public void reduce(Iterable<Tuple2<Long, Long>> t, Collector<Tuple2<Long, Long>> c) throws Exception {
-			Long v = t.iterator().next().f0;
-			c.collect(new Tuple2<Long, Long>(v, v));
+		public void reduce(Iterable<Tuple2<Integer, Integer>> t, Collector<Tuple2<Integer, Integer>> c) throws Exception {
+			Integer v = t.iterator().next().f0;
+			c.collect(new Tuple2<Integer, Integer>(v, v));
 		}
 	}
 
 	/**
 	 * Undirected edges by emitting for each input edge the input edges itself and an inverted version.
 	 */
-	public static final class UndirectEdge implements FlatMapFunction<Tuple2<Long, Long>, Tuple2<Long, Long>> {
-		Tuple2<Long, Long> invertedEdge = new Tuple2<Long, Long>();
+	public static final class UndirectEdge implements FlatMapFunction<Tuple2<Integer, Integer>, Tuple2<Integer, Integer>> {
+		Tuple2<Integer, Integer> invertedEdge = new Tuple2<Integer, Integer>();
 
 		@Override
-		public void flatMap(Tuple2<Long, Long> edge, Collector<Tuple2<Long, Long>> out) {
+		public void flatMap(Tuple2<Integer, Integer> edge, Collector<Tuple2<Integer, Integer>> out) {
 			invertedEdge.f0 = edge.f1;
 			invertedEdge.f1 = edge.f0;
 			out.collect(edge);
@@ -118,33 +124,33 @@ public class ConnectedComponentsBulk {
 	 */
 	@ConstantFieldsFirst("1 -> 0")
 	@ConstantFieldsSecond("1 -> 1")
-	public static final class NeighborWithComponentIDJoin implements JoinFunction<Tuple2<Long, Long>, Tuple2<Long, Long>, Tuple2<Long, Long>> {
+	public static final class NeighborWithComponentIDJoin implements JoinFunction<Tuple2<Integer, Integer>, Tuple2<Integer, Integer>, Tuple2<Integer, Integer>> {
 
 		@Override
-		public Tuple2<Long, Long> join(Tuple2<Long, Long> vertexWithComponent, Tuple2<Long, Long> edge) {
-			return new Tuple2<Long, Long>(edge.f1, vertexWithComponent.f1);
+		public Tuple2<Integer, Integer> join(Tuple2<Integer, Integer> vertexWithComponent, Tuple2<Integer, Integer> edge) {
+			return new Tuple2<Integer, Integer>(edge.f1, vertexWithComponent.f1);
 		}
 	}
 
 
 
 	@ConstantFieldsFirst("0")
-	public static final class ComponentIdFilter implements FlatJoinFunction<Tuple2<Long, Long>, Tuple2<Long, Long>, Tuple2<Long, Long>> {
+	public static final class ComponentIdFilter implements FlatJoinFunction<Tuple2<Integer, Integer>, Tuple2<Integer, Integer>, Tuple2<Integer, Integer>> {
 
 		@Override
-		public void join(Tuple2<Long, Long> candidate, Tuple2<Long, Long> old, Collector<Tuple2<Long, Long>> out) {
+		public void join(Tuple2<Integer, Integer> candidate, Tuple2<Integer, Integer> old, Collector<Tuple2<Integer, Integer>> out) {
 			if (candidate.f1 < old.f1) {
 				out.collect(candidate);
 			}
 		}
 	}
 
-	public static final class UpdateSolutionSet implements CoGroupFunction<Tuple2<Long, Long>, Tuple2<Long, Long>, Tuple2<Long, Long>> {
+	public static final class UpdateSolutionSet implements CoGroupFunction<Tuple2<Integer, Integer>, Tuple2<Integer, Integer>, Tuple2<Integer, Integer>> {
 
 		@Override
-		public void coGroup(Iterable<Tuple2<Long, Long>> ss, Iterable<Tuple2<Long, Long>> delta, Collector<Tuple2<Long, Long>> c) throws Exception {
-			Iterator<Tuple2<Long, Long>> it1 = ss.iterator();
-			Iterator<Tuple2<Long, Long>> it2 = delta.iterator();
+		public void coGroup(Iterable<Tuple2<Integer, Integer>> ss, Iterable<Tuple2<Integer, Integer>> delta, Collector<Tuple2<Integer, Integer>> c) throws Exception {
+			Iterator<Tuple2<Integer, Integer>> it1 = ss.iterator();
+			Iterator<Tuple2<Integer, Integer>> it2 = delta.iterator();
 			if (it2.hasNext()) {
 				c.collect(it2.next());
 			} else {

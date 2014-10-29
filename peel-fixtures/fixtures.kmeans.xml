@@ -1,0 +1,1234 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <!--************************************************************************
+    * Custom Systems
+    *************************************************************************-->
+
+    <!-- Use lifespan "PROVIDED" if you want to start the systems manually   -->
+    <!-- Use lifespan "SUITE" if you want PEEL to deploy to start them       -->
+
+    <!-- Hadoop Distributed File System (overridden 'hdfs-1' bean) -->
+    <bean id="hdfs-1" class="eu.stratosphere.peel.extensions.hadoop.beans.system.HDFS1" parent="system">
+        <constructor-arg name="version" value="1.2.1"/>
+        <constructor-arg name="lifespan" value="SUITE"/>
+        <constructor-arg name="dependencies">
+            <set value-type="eu.stratosphere.peel.core.beans.system.System">
+            </set>
+        </constructor-arg>
+    </bean>
+
+    <!-- Hadoop Distributed File System (overridden 'hdfs-2' bean) -->
+   <!--  <bean id="hdfs-2" class="eu.stratosphere.peel.extensions.hadoop.beans.system.HDFS2" parent="system">
+        <constructor-arg name="version" value="2.4.1"/>
+        <constructor-arg name="lifespan" value="SUITE"/>
+        <constructor-arg name="dependencies">
+            <set value-type="eu.stratosphere.peel.core.beans.system.System">
+            </set>
+        </constructor-arg>
+    </bean> -->
+
+    <!-- Flink (overridden 'flink' bean that depends on HDFS1) -->
+    <bean id="flink" class="eu.stratosphere.peel.extensions.flink.beans.system.Flink" parent="system" abstract="true">
+        <constructor-arg name="lifespan" value="SUITE"/>
+        <constructor-arg name="dependencies">
+            <set value-type="eu.stratosphere.peel.core.beans.system.System">
+                <ref bean="hdfs-1"/>
+            </set>
+        </constructor-arg>
+    </bean>
+
+    <!-- Flink (version 0.7.0) -->
+    <bean id="flink-0.7.0" parent="flink">
+        <constructor-arg name="version" value="0.7.0"/>
+    </bean>
+
+    <!-- Spark (overridden spark bean that depends on hdfs -->
+    <bean id="spark" class="eu.stratosphere.peel.extensions.spark.beans.system.Spark" parent="system" abstract="true">
+        <constructor-arg name="lifespan" value="SUITE"/>
+        <constructor-arg name="dependencies">
+            <set value-type="eu.stratosphere.peel.core.beans.system.System.System">
+                <ref bean="hdfs-1"/>
+            </set>
+        </constructor-arg>
+    </bean>
+
+    <!-- Spark (version 1.1) -->
+    <bean id="spark-1.1" parent="spark">
+        <constructor-arg name="version" value="1.1.0"/>
+    </bean>
+
+    <!--************************************************************************
+    * Data Sets
+    *************************************************************************-->
+
+    <!-- KMeans input -->
+    <bean id="dataset.kmeans.D3K8.10m.centers" parent="dataset.static.hdfs-1">
+        <constructor-arg name="src" value="${app.path.datasets}/kmeans/kmeans.D3K8.10m/centers.gz"/>
+        <constructor-arg name="dst" value="${system.hadoop-1.path.input}/kmeans.D3K8.10m/centers"/>
+    </bean>
+    <bean id="dataset.kmeans.D3K8.10m.points" parent="dataset.static.hdfs-1">
+        <constructor-arg name="src" value="${app.path.datasets}/kmeans/kmeans.D3K8.10m/points.gz"/>
+        <constructor-arg name="dst" value="${system.hadoop-1.path.input}/kmeans.D3K8.10m/points"/>
+    </bean>
+
+    <bean id="dataset.kmeans.D3K8.20m.centers" parent="dataset.static.hdfs-1">
+        <constructor-arg name="src" value="${app.path.datasets}/kmeans/kmeans.D3K8.20m/centers.gz"/>
+        <constructor-arg name="dst" value="${system.hadoop-1.path.input}/kmeans.D3K8.20m/centers"/>
+    </bean>
+    <bean id="dataset.kmeans.D3K8.20m.points" parent="dataset.static.hdfs-1">
+        <constructor-arg name="src" value="${app.path.datasets}/kmeans/kmeans.D3K8.20m/points.gz"/>
+        <constructor-arg name="dst" value="${system.hadoop-1.path.input}/kmeans.D3K8.20m/points"/>
+    </bean>
+
+    <bean id="dataset.kmeans.D3K8.30m.centers" parent="dataset.static.hdfs-1">
+        <constructor-arg name="src" value="${app.path.datasets}/kmeans/kmeans.D3K8.30m/centers.gz"/>
+        <constructor-arg name="dst" value="${system.hadoop-1.path.input}/kmeans.D3K8.30m/centers"/>
+    </bean>
+    <bean id="dataset.kmeans.D3K8.30m.points" parent="dataset.static.hdfs-1">
+        <constructor-arg name="src" value="${app.path.datasets}/kmeans/kmeans.D3K8.30m/points.gz"/>
+        <constructor-arg name="dst" value="${system.hadoop-1.path.input}/kmeans.D3K8.30m/points"/>
+    </bean>
+
+    <bean id="dataset.kmeans.D3K8.40m.centers" parent="dataset.static.hdfs-1">
+        <constructor-arg name="src" value="${app.path.datasets}/kmeans/kmeans.D3K8.40m/centers.gz"/>
+        <constructor-arg name="dst" value="${system.hadoop-1.path.input}/kmeans.D3K8.40m/centers"/>
+    </bean>
+    <bean id="dataset.kmeans.D3K8.40m.points" parent="dataset.static.hdfs-1">
+        <constructor-arg name="src" value="${app.path.datasets}/kmeans/kmeans.D3K8.40m/points.gz"/>
+        <constructor-arg name="dst" value="${system.hadoop-1.path.input}/kmeans.D3K8.40m/points"/>
+    </bean>
+
+    <bean id="dataset.kmeans.D1000K200.100k.centers" parent="dataset.static.hdfs-1">
+        <constructor-arg name="src" value="${app.path.datasets}/kmeans/kmeans.D1000K200.100k/centers.gz"/>
+        <constructor-arg name="dst" value="${system.hadoop-1.path.input}/kmeans.D1000K200.100k/centers"/>
+    </bean>
+    <bean id="dataset.kmeans.D1000K200.100k.points" parent="dataset.static.hdfs-1">
+        <constructor-arg name="src" value="${app.path.datasets}/kmeans/kmeans.D1000K200.100k/points.gz"/>
+        <constructor-arg name="dst" value="${system.hadoop-1.path.input}/kmeans.D1000K200.100k/points"/>
+    </bean>
+
+    <bean id="dataset.kmeans.D1000K200.200k.centers" parent="dataset.static.hdfs-1">
+        <constructor-arg name="src" value="${app.path.datasets}/kmeans/kmeans.D1000K200.200k/centers.gz"/>
+        <constructor-arg name="dst" value="${system.hadoop-1.path.input}/kmeans.D1000K200.200k/centers"/>
+    </bean>
+    <bean id="dataset.kmeans.D1000K200.200k.points" parent="dataset.static.hdfs-1">
+        <constructor-arg name="src" value="${app.path.datasets}/kmeans/kmeans.D1000K200.200k/points.gz"/>
+        <constructor-arg name="dst" value="${system.hadoop-1.path.input}/kmeans.D1000K200.200k/points"/>
+    </bean>
+
+    <bean id="dataset.kmeans.D1000K200.300k.centers" parent="dataset.static.hdfs-1">
+        <constructor-arg name="src" value="${app.path.datasets}/kmeans/kmeans.D1000K200.300k/centers.gz"/>
+        <constructor-arg name="dst" value="${system.hadoop-1.path.input}/kmeans.D1000K200.300k/centers"/>
+    </bean>
+    <bean id="dataset.kmeans.D1000K200.300k.points" parent="dataset.static.hdfs-1">
+        <constructor-arg name="src" value="${app.path.datasets}/kmeans/kmeans.D1000K200.300k/points.gz"/>
+        <constructor-arg name="dst" value="${system.hadoop-1.path.input}/kmeans.D1000K200.300k/points"/>
+    </bean>
+
+    <bean id="dataset.kmeans.D1000K200.400k.centers" parent="dataset.static.hdfs-1">
+        <constructor-arg name="src" value="${app.path.datasets}/kmeans/kmeans.D1000K200.400k/centers.gz"/>
+        <constructor-arg name="dst" value="${system.hadoop-1.path.input}/kmeans.D1000K200.400k/centers"/>
+    </bean>
+    <bean id="dataset.kmeans.D1000K200.400k.points" parent="dataset.static.hdfs-1">
+        <constructor-arg name="src" value="${app.path.datasets}/kmeans/kmeans.D1000K200.400k/points.gz"/>
+        <constructor-arg name="dst" value="${system.hadoop-1.path.input}/kmeans.D1000K200.400k/points"/>
+    </bean>
+
+    <!-- KMeans output -->
+    <bean id="experiment.output.hdfs.kmeans" parent="experiment.output.hdfs-1">
+        <constructor-arg name="path" value="${system.hadoop-1.path.output}/kmeans"/>
+    </bean>
+
+    <!--************************************************************************
+    * Experiments
+    *************************************************************************-->
+
+    <!-- Experiment beans -->
+    <bean id="experiment.flink" class="eu.stratosphere.peel.extensions.flink.beans.experiment.FlinkExperiment" abstract="true">
+        <constructor-arg name="runner" ref="flink-0.7.0"/>
+        <constructor-arg name="runs" value="5"/>
+    </bean>
+
+    <bean id="experiment.spark" class="eu.stratosphere.peel.extensions.spark.beans.experiment.SparkExperiment" abstract="true">
+        <constructor-arg name="runner" ref="spark-1.1"/>
+        <constructor-arg name="runs" value="5"/>
+    </bean>
+
+
+    <!-- KMeans Low Dimension -->
+    <bean id="experiment.flink.kmeans.D3K8.10m" parent="experiment.flink" abstract="true">
+        <constructor-arg name="command">
+            <value>-c com.github.projectflink.testPlan.KMeansArbitraryDimension ${app.path.jobs}/flink-jobs-0.1-SNAPSHOT-FlinkBench.jar ${system.hadoop-1.path.input}/kmeans.D3K8.10m/points ${system.hadoop-1.path.input}/kmeans.D3K8.10m/centers  ${system.hadoop-1.path.output}/kmeans 10</value>
+        </constructor-arg>
+        <constructor-arg name="inputs">
+            <set value-type="eu.stratosphere.peel.core.beans.data.DataSet">
+                <ref bean="dataset.kmeans.D3K8.10m.centers"/>
+                <ref bean="dataset.kmeans.D3K8.10m.points" />
+            </set>
+        </constructor-arg>
+        <constructor-arg name="output">
+            <ref bean="experiment.output.hdfs.kmeans"/>
+        </constructor-arg>
+    </bean>
+
+    <bean id="experiment.flink.kmeans.D3K8.20m" parent="experiment.flink" abstract="true">
+        <constructor-arg name="command">
+            <value>-c com.github.projectflink.testPlan.KMeansArbitraryDimension ${app.path.jobs}/flink-jobs-0.1-SNAPSHOT-FlinkBench.jar ${system.hadoop-1.path.input}/kmeans.D3K8.20m/points ${system.hadoop-1.path.input}/kmeans.D3K8.20m/centers  ${system.hadoop-1.path.output}/kmeans 10</value>
+        </constructor-arg>
+       <constructor-arg name="inputs">
+            <set value-type="eu.stratosphere.peel.core.beans.data.DataSet">
+                <ref bean="dataset.kmeans.D3K8.20m.centers"/>
+                <ref bean="dataset.kmeans.D3K8.20m.points" />
+            </set>
+        </constructor-arg>
+        <constructor-arg name="output">
+            <ref bean="experiment.output.hdfs.kmeans"/>
+        </constructor-arg>
+    </bean>
+
+    <bean id="experiment.flink.kmeans.D3K8.30m" parent="experiment.flink" abstract="true">
+        <constructor-arg name="command">
+            <value>-c com.github.projectflink.testPlan.KMeansArbitraryDimension ${app.path.jobs}/flink-jobs-0.1-SNAPSHOT-FlinkBench.jar ${system.hadoop-1.path.input}/kmeans.D3K8.30m/points ${system.hadoop-1.path.input}/kmeans.D3K8.30m/centers  ${system.hadoop-1.path.output}/kmeans 10</value>
+        </constructor-arg>
+        <constructor-arg name="inputs">
+            <set value-type="eu.stratosphere.peel.core.beans.data.DataSet">
+                <ref bean="dataset.kmeans.D3K8.30m.centers"/>
+                <ref bean="dataset.kmeans.D3K8.30m.points" />
+            </set>
+        </constructor-arg>
+        <constructor-arg name="output">
+            <ref bean="experiment.output.hdfs.kmeans"/>
+        </constructor-arg>
+    </bean>
+
+    <bean id="experiment.flink.kmeans.D3K8.40m" parent="experiment.flink" abstract="true">
+        <constructor-arg name="command">
+            <value>-c com.github.projectflink.testPlan.KMeansArbitraryDimension ${app.path.jobs}/flink-jobs-0.1-SNAPSHOT-FlinkBench.jar ${system.hadoop-1.path.input}/kmeans.D3K8.40m/points ${system.hadoop-1.path.input}/kmeans.D3K8.40m/centers  ${system.hadoop-1.path.output}/kmeans 10</value>
+        </constructor-arg>
+        <constructor-arg name="inputs">
+            <set value-type="eu.stratosphere.peel.core.beans.data.DataSet">
+                <ref bean="dataset.kmeans.D3K8.40m.centers"/>
+                <ref bean="dataset.kmeans.D3K8.40m.points" />
+            </set>
+        </constructor-arg>
+        <constructor-arg name="output">
+            <ref bean="experiment.output.hdfs.kmeans"/>
+        </constructor-arg>
+    </bean>
+
+    <bean id="experiment.spark.kmeans.D3K8.10m" parent="experiment.spark" abstract="true">
+        <constructor-arg name="command">
+            <!-- spark command that is used: spark-submit -->
+            <value>--class com.github.projectflink.spark.KMeansArbitraryDimension ${app.path.jobs}/spark-jobs-0.1-SNAPSHOT-SparkBench.jar ${system.spark.config.defaults.spark.master} ${system.hadoop-1.path.input}/kmeans.D3K8.10m/points ${system.hadoop-1.path.input}/kmeans.D3K8.10m/centers ${system.hadoop-1.path.output}/kmeans 10</value>
+        </constructor-arg>
+        <constructor-arg name="inputs">
+            <set value-type="eu.stratosphere.peel.core.beans.data.DataSet">
+                <ref bean="dataset.kmeans.D3K8.10m.centers"/>
+                <ref bean="dataset.kmeans.D3K8.10m.points" />
+            </set>
+        </constructor-arg>
+        <constructor-arg name="output">
+            <ref bean="experiment.output.hdfs.kmeans"/>
+        </constructor-arg>
+    </bean>
+
+    <bean id="experiment.spark.kmeans.D3K8.20m" parent="experiment.spark" abstract="true">
+        <constructor-arg name="command">
+            <!-- spark command that is used: spark-submit -->
+            <value>--class com.github.projectflink.spark.KMeansArbitraryDimension ${app.path.jobs}/spark-jobs-0.1-SNAPSHOT-SparkBench.jar ${system.spark.config.defaults.spark.master} ${system.hadoop-1.path.input}/kmeans.D3K8.20m/points ${system.hadoop-1.path.input}/kmeans.D3K8.20m/centers ${system.hadoop-1.path.output}/kmeans 10</value>
+        </constructor-arg>
+        <constructor-arg name="inputs">
+            <set value-type="eu.stratosphere.peel.core.beans.data.DataSet">
+                <ref bean="dataset.kmeans.D3K8.20m.centers"/>
+                <ref bean="dataset.kmeans.D3K8.20m.points" />
+            </set>
+        </constructor-arg>
+        <constructor-arg name="output">
+            <ref bean="experiment.output.hdfs.kmeans"/>
+        </constructor-arg>
+    </bean>
+
+    <bean id="experiment.spark.kmeans.D3K8.30m" parent="experiment.spark" abstract="true">
+        <constructor-arg name="command">
+            <!-- spark command that is used: spark-submit -->
+            <value>--class com.github.projectflink.spark.KMeansArbitraryDimension ${app.path.jobs}/spark-jobs-0.1-SNAPSHOT-SparkBench.jar ${system.spark.config.defaults.spark.master} ${system.hadoop-1.path.input}/kmeans.D3K8.30m/points ${system.hadoop-1.path.input}/kmeans.D3K8.30m/centers ${system.hadoop-1.path.output}/kmeans 10</value>
+        </constructor-arg>
+        <constructor-arg name="inputs">
+            <set value-type="eu.stratosphere.peel.core.beans.data.DataSet">
+                <ref bean="dataset.kmeans.D3K8.30m.centers"/>
+                <ref bean="dataset.kmeans.D3K8.30m.points" />
+            </set>
+        </constructor-arg>
+        <constructor-arg name="output">
+            <ref bean="experiment.output.hdfs.kmeans"/>
+        </constructor-arg>
+    </bean>
+
+    <bean id="experiment.spark.kmeans.D3K8.40m" parent="experiment.spark" abstract="true">
+        <constructor-arg name="command">
+            <!-- spark command that is used: spark-submit -->
+            <value>--class com.github.projectflink.spark.KMeansArbitraryDimension ${app.path.jobs}/spark-jobs-0.1-SNAPSHOT-SparkBench.jar ${system.spark.config.defaults.spark.master} ${system.hadoop-1.path.input}/kmeans.D3K8.40m/points ${system.hadoop-1.path.input}/kmeans.D3K8.40m/centers ${system.hadoop-1.path.output}/kmeans 10</value>
+        </constructor-arg>
+        <constructor-arg name="inputs">
+            <set value-type="eu.stratosphere.peel.core.beans.data.DataSet">
+                <ref bean="dataset.kmeans.D3K8.40m.centers"/>
+                <ref bean="dataset.kmeans.D3K8.40m.points" />
+            </set>
+        </constructor-arg>
+        <constructor-arg name="output">
+            <ref bean="experiment.output.hdfs.kmeans"/>
+        </constructor-arg>
+    </bean>     
+
+    <!-- KMeans High Dimension -->
+    <bean id="experiment.flink.kmeans.D1000K200.100k" parent="experiment.flink" abstract="true">
+        <constructor-arg name="command">
+            <value>-c com.github.projectflink.testPlan.KMeansArbitraryDimension ${app.path.jobs}/flink-jobs-0.1-SNAPSHOT-FlinkBench.jar ${system.hadoop-1.path.input}/kmeans.D1000K200.100k/points ${system.hadoop-1.path.input}/kmeans.D1000K200.100k/centers  ${system.hadoop-1.path.output}/kmeans 10</value>
+        </constructor-arg>
+        <constructor-arg name="inputs">
+            <set value-type="eu.stratosphere.peel.core.beans.data.DataSet">
+                <ref bean="dataset.kmeans.D1000K200.100k.centers"/>
+                <ref bean="dataset.kmeans.D1000K200.100k.points" />
+            </set>
+        </constructor-arg>
+        <constructor-arg name="output">
+            <ref bean="experiment.output.hdfs.kmeans"/>
+        </constructor-arg>
+    </bean>
+
+    <bean id="experiment.flink.kmeans.D1000K200.200k" parent="experiment.flink" abstract="true">
+        <constructor-arg name="command">
+            <value>-c com.github.projectflink.testPlan.KMeansArbitraryDimension ${app.path.jobs}/flink-jobs-0.1-SNAPSHOT-FlinkBench.jar ${system.hadoop-1.path.input}/kmeans.D1000K200.200k/points ${system.hadoop-1.path.input}/kmeans.D1000K200.200k/centers  ${system.hadoop-1.path.output}/kmeans 10</value>
+        </constructor-arg>
+        <constructor-arg name="inputs">
+            <set value-type="eu.stratosphere.peel.core.beans.data.DataSet">
+                <ref bean="dataset.kmeans.D1000K200.200k.centers"/>
+                <ref bean="dataset.kmeans.D1000K200.200k.points" />
+            </set>
+        </constructor-arg>
+        <constructor-arg name="output">
+            <ref bean="experiment.output.hdfs.kmeans"/>
+        </constructor-arg>
+    </bean>
+
+    <bean id="experiment.flink.kmeans.D1000K200.300k" parent="experiment.flink" abstract="true">
+        <constructor-arg name="command">
+            <value>-c com.github.projectflink.testPlan.KMeansArbitraryDimension ${app.path.jobs}/flink-jobs-0.1-SNAPSHOT-FlinkBench.jar ${system.hadoop-1.path.input}/kmeans.D1000K200.300k/points ${system.hadoop-1.path.input}/kmeans.D1000K200.300k/centers  ${system.hadoop-1.path.output}/kmeans 10</value>
+        </constructor-arg>
+        <constructor-arg name="inputs">
+            <set value-type="eu.stratosphere.peel.core.beans.data.DataSet">
+                <ref bean="dataset.kmeans.D1000K200.300k.centers"/>
+                <ref bean="dataset.kmeans.D1000K200.300k.points" />
+            </set>
+        </constructor-arg>
+        <constructor-arg name="output">
+            <ref bean="experiment.output.hdfs.kmeans"/>
+        </constructor-arg>
+    </bean>
+
+    <bean id="experiment.flink.kmeans.D1000K200.400k" parent="experiment.flink" abstract="true">
+        <constructor-arg name="command">
+            <value>-c com.github.projectflink.testPlan.KMeansArbitraryDimension ${app.path.jobs}/flink-jobs-0.1-SNAPSHOT-FlinkBench.jar ${system.hadoop-1.path.input}/kmeans.D1000K200.400k/points ${system.hadoop-1.path.input}/kmeans.D1000K200.400k/centers  ${system.hadoop-1.path.output}/kmeans 10</value>
+        </constructor-arg>
+        <constructor-arg name="inputs">
+            <set value-type="eu.stratosphere.peel.core.beans.data.DataSet">
+                <ref bean="dataset.kmeans.D1000K200.400k.centers"/>
+                <ref bean="dataset.kmeans.D1000K200.400k.points" />
+            </set>
+        </constructor-arg>
+        <constructor-arg name="output">
+            <ref bean="experiment.output.hdfs.kmeans"/>
+        </constructor-arg>
+    </bean>
+
+    <bean id="experiment.spark.kmeans.D1000K200.100k" parent="experiment.spark" abstract="true">
+        <constructor-arg name="command">
+            <!-- spark command that is used: spark-submit -->
+            <value>--class com.github.projectflink.spark.KMeansArbitraryDimension ${app.path.jobs}/spark-jobs-0.1-SNAPSHOT-SparkBench.jar ${system.spark.config.defaults.spark.master} ${system.hadoop-1.path.input}/kmeans.D1000K200.100k/points ${system.hadoop-1.path.input}/kmeans.D1000K200.100k/centers ${system.hadoop-1.path.output}/kmeans 10</value>
+        </constructor-arg>
+        <constructor-arg name="inputs">
+            <set value-type="eu.stratosphere.peel.core.beans.data.DataSet">
+                <ref bean="dataset.kmeans.D1000K200.100k.centers"/>
+                <ref bean="dataset.kmeans.D1000K200.100k.points" />
+            </set>
+        </constructor-arg>
+        <constructor-arg name="output">
+            <ref bean="experiment.output.hdfs.kmeans"/>
+        </constructor-arg>
+    </bean>
+
+    <bean id="experiment.spark.kmeans.D1000K200.200k" parent="experiment.spark" abstract="true">
+        <constructor-arg name="command">
+            <!-- spark command that is used: spark-submit -->
+            <value>--class com.github.projectflink.spark.KMeansArbitraryDimension ${app.path.jobs}/spark-jobs-0.1-SNAPSHOT-SparkBench.jar ${system.spark.config.defaults.spark.master} ${system.hadoop-1.path.input}/kmeans.D1000K200.200k/points ${system.hadoop-1.path.input}/kmeans.D1000K200.200k/centers ${system.hadoop-1.path.output}/kmeans 10</value>
+        </constructor-arg>
+        <constructor-arg name="inputs">
+            <set value-type="eu.stratosphere.peel.core.beans.data.DataSet">
+                <ref bean="dataset.kmeans.D1000K200.200k.centers"/>
+                <ref bean="dataset.kmeans.D1000K200.200k.points" />
+            </set>
+        </constructor-arg>
+        <constructor-arg name="output">
+            <ref bean="experiment.output.hdfs.kmeans"/>
+        </constructor-arg>
+    </bean>
+
+    <bean id="experiment.spark.kmeans.D1000K200.300k" parent="experiment.spark" abstract="true">
+        <constructor-arg name="command">
+            <!-- spark command that is used: spark-submit -->
+            <value>--class com.github.projectflink.spark.KMeansArbitraryDimension ${app.path.jobs}/spark-jobs-0.1-SNAPSHOT-SparkBench.jar ${system.spark.config.defaults.spark.master} ${system.hadoop-1.path.input}/kmeans.D1000K200.300k/points ${system.hadoop-1.path.input}/kmeans.D1000K200.300k/centers ${system.hadoop-1.path.output}/kmeans 10</value>
+        </constructor-arg>
+        <constructor-arg name="inputs">
+            <set value-type="eu.stratosphere.peel.core.beans.data.DataSet">
+                <ref bean="dataset.kmeans.D1000K200.300k.centers"/>
+                <ref bean="dataset.kmeans.D1000K200.300k.points" />
+            </set>
+        </constructor-arg>
+        <constructor-arg name="output">
+            <ref bean="experiment.output.hdfs.kmeans"/>
+        </constructor-arg>
+    </bean>
+
+    <bean id="experiment.spark.kmeans.D1000K200.400k" parent="experiment.spark" abstract="true">
+        <constructor-arg name="command">
+            <!-- spark command that is used: spark-submit -->
+            <value>--class com.github.projectflink.spark.KMeansArbitraryDimension ${app.path.jobs}/spark-jobs-0.1-SNAPSHOT-SparkBench.jar ${system.spark.config.defaults.spark.master} ${system.hadoop-1.path.input}/kmeans.D1000K200.400k/points ${system.hadoop-1.path.input}/kmeans.D1000K200.400k/centers ${system.hadoop-1.path.output}/kmeans 10</value>
+        </constructor-arg>
+        <constructor-arg name="inputs">
+            <set value-type="eu.stratosphere.peel.core.beans.data.DataSet">
+                <ref bean="dataset.kmeans.D1000K200.400k.centers"/>
+                <ref bean="dataset.kmeans.D1000K200.400k.points" />
+            </set>
+        </constructor-arg>
+        <constructor-arg name="output">
+            <ref bean="experiment.output.hdfs.kmeans"/>
+        </constructor-arg>
+    </bean>   
+
+    <!--************************************************************************
+    * Fixtures
+    *************************************************************************-->
+
+    <!-- KMeans Low Dimension -->
+    <bean id="kmeans.flink.D3K8.10m.default" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.flink.kmeans.D3K8.10m">
+                    <constructor-arg name="name" value="kmeans.D3K8.10m.single-run"/>
+                    <constructor-arg name="runs" value="1"/>
+                    <constructor-arg name="config">
+                        <value/>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="kmeans.flink.D3K8.10m.cloud-7" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.flink.kmeans.D3K8.10m">
+                    <constructor-arg name="name" value="kmeans.D3K8.10m.dop64.men36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 12000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.flink.config.yaml.parallelization.degree.default = 64
+                            system.flink.config.yaml.taskmanager.heap.mb = 36863
+                        </value>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="kmeans.flink.D3K8.20m.default" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.flink.kmeans.D3K8.20m">
+                    <constructor-arg name="name" value="kmeans.D3K8.20m.single-run"/>
+                    <constructor-arg name="runs" value="1"/>
+                    <constructor-arg name="config">
+                        <value/>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="kmeans.flink.D3K8.20m.cloud-7" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.flink.kmeans.D3K8.20m">
+                    <constructor-arg name="name" value="kmeans.D3K8.20m.dop64.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 12000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.flink.config.yaml.parallelization.degree.default = 64
+                            system.flink.config.yaml.taskmanager.heap.mb = 36863
+                        </value>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="kmeans.flink.D3K8.30m.default" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.flink.kmeans.D3K8.30m">
+                    <constructor-arg name="name" value="kmeans.D3K8.30m.single-run"/>
+                    <constructor-arg name="runs" value="1"/>
+                    <constructor-arg name="config">
+                        <value/>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="kmeans.flink.D3K8.30m.cloud-7" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.flink.kmeans.D3K8.30m">
+                    <constructor-arg name="name" value="kmeans.D3K8.30m.dop64.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 12000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.flink.config.yaml.parallelization.degree.default = 64
+                            system.flink.config.yaml.taskmanager.heap.mb = 36863
+                        </value>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="kmeans.flink.D3K8.40m.default" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.flink.kmeans.D3K8.40m">
+                    <constructor-arg name="name" value="kmeans.D3K8.40m.single-run"/>
+                    <constructor-arg name="runs" value="1"/>
+                    <constructor-arg name="config">
+                        <value/>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="kmeans.flink.D3K8.40m.cloud-7" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.flink.kmeans.D3K8.40m">
+                    <constructor-arg name="name" value="kmeans.D3K8.40m.dop64.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 12000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.flink.config.yaml.parallelization.degree.default = 64
+                            system.flink.config.yaml.taskmanager.heap.mb = 36863
+                        </value>
+                    </constructor-arg>
+                </bean>
+                <bean parent="experiment.flink.kmeans.D3K8.40m">
+                    <constructor-arg name="name" value="kmeans.D3K8.40m.dop64.mem5G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 12000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.flink.config.yaml.parallelization.degree.default = 64
+                            system.flink.config.yaml.taskmanager.heap.mb = 5120
+                        </value>
+                    </constructor-arg>
+                </bean>
+                <bean parent="experiment.flink.kmeans.D3K8.40m">
+                    <constructor-arg name="name" value="kmeans.D3K8.40m.dop64.mem10G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 12000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.flink.config.yaml.parallelization.degree.default = 64
+                            system.flink.config.yaml.taskmanager.heap.mb = 10240
+                        </value>
+                    </constructor-arg>
+                </bean>
+                <bean parent="experiment.flink.kmeans.D3K8.40m">
+                    <constructor-arg name="name" value="kmeans.D3K8.40m.dop64.mem20G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 12000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.flink.config.yaml.parallelization.degree.default = 64
+                            system.flink.config.yaml.taskmanager.heap.mb = 20480
+                        </value>
+                    </constructor-arg>
+                </bean>
+                <bean parent="experiment.flink.kmeans.D3K8.40m">
+                    <constructor-arg name="name" value="kmeans.D3K8.40m.dop48.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 12000
+                            system.default.config.slaves = [ "cloud-8", "cloud-9", "cloud-10" ]
+                            system.flink.config.yaml.parallelization.degree.default = 48
+                            system.flink.config.yaml.taskmanager.heap.mb = 36863
+                        </value>
+                    </constructor-arg>
+                </bean>
+                <bean parent="experiment.flink.kmeans.D3K8.40m">
+                    <constructor-arg name="name" value="kmeans.D3K8.40m.dop32.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 12000
+                            system.default.config.slaves = [ "cloud-9", "cloud-10" ]
+                            system.flink.config.yaml.parallelization.degree.default = 32
+                            system.flink.config.yaml.taskmanager.heap.mb = 36863
+                        </value>
+                    </constructor-arg>
+                </bean>
+                <bean parent="experiment.flink.kmeans.D3K8.40m">
+                    <constructor-arg name="name" value="kmeans.D3K8.40m.dop16.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 12000
+                            system.default.config.slaves = [ "cloud-10" ]
+                            system.flink.config.yaml.parallelization.degree.default = 16
+                            system.flink.config.yaml.taskmanager.heap.mb = 36863
+                        </value>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="kmeans.spark.D3K8.10m.default" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.spark.kmeans.D3K8.10m">
+                    <constructor-arg name="name" value="kmeans.D3K8.10m.single-run"/>
+                    <constructor-arg name="runs" value="1"/>
+                    <constructor-arg name="config">
+                        <value/>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="kmeans.spark.D3K8.10m.cloud-7" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.spark.kmeans.D3K8.10m">
+                    <constructor-arg name="name" value="kmeans.D3K8.10m.dop64.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 12000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.spark.config.defaults.spark.default.parallelism = 64
+                            system.spark.config.defaults.spark.executor.memory = "36864m"
+                            system.spark.config.env.SPARK_EXECUTOR_MEMORY = "36864m"
+                            system.spark.config.env.SPARK_WORKER_MEMORY = "36864m"
+                        </value>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="kmeans.spark.D3K8.20m.default" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.spark.kmeans.D3K8.20m">
+                    <constructor-arg name="name" value="kmeans.D3K8.20m.single-run"/>
+                    <constructor-arg name="runs" value="1"/>
+                    <constructor-arg name="config">
+                        <value/>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="kmeans.spark.D3K8.20m.cloud-7" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.spark.kmeans.D3K8.20m">
+                    <constructor-arg name="name" value="kmeans.D3K8.20m.dop64.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 12000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.spark.config.defaults.spark.default.parallelism = 64
+                            system.spark.config.defaults.spark.executor.memory = "36864m"
+                            system.spark.config.env.SPARK_EXECUTOR_MEMORY = "36864m"
+                            system.spark.config.env.SPARK_WORKER_MEMORY = "36864m"
+                        </value>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="kmeans.spark.D3K8.30m.default" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.spark.kmeans.D3K8.30m">
+                    <constructor-arg name="name" value="kmeans.D3K8.30m.single-run"/>
+                    <constructor-arg name="runs" value="1"/>
+                    <constructor-arg name="config">
+                        <value/>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="kmeans.spark.D3K8.30m.cloud-7" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.spark.kmeans.D3K8.30m">
+                    <constructor-arg name="name" value="kmeans.D3K8.30m.dop64.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 12000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.spark.config.defaults.spark.default.parallelism = 64
+                            system.spark.config.defaults.spark.executor.memory = "36864m"
+                            system.spark.config.env.SPARK_EXECUTOR_MEMORY = "36864m"
+                            system.spark.config.env.SPARK_WORKER_MEMORY = "36864m"
+                        </value>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="kmeans.spark.D3K8.40m.default" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.spark.kmeans.D3K8.40m">
+                    <constructor-arg name="name" value="kmeans.D3K8.40m.single-run"/>
+                    <constructor-arg name="runs" value="1"/>
+                    <constructor-arg name="config">
+                        <value/>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="kmeans.spark.D3K8.40m.cloud-7" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.spark.kmeans.D3K8.40m">
+                    <constructor-arg name="name" value="kmeans.D3K8.40m.dop64.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 12000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.spark.config.defaults.spark.default.parallelism = 64
+                            system.spark.config.defaults.spark.executor.memory = "36864m"
+                            system.spark.config.env.SPARK_EXECUTOR_MEMORY = "36864m"
+                            system.spark.config.env.SPARK_WORKER_MEMORY = "36864m"
+                        </value>
+                    </constructor-arg>
+                </bean>
+                <bean parent="experiment.spark.kmeans.D3K8.40m">
+                    <constructor-arg name="name" value="kmeans.D3K8.40m.dop64.mem5G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 12000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.spark.config.defaults.spark.default.parallelism = 64
+                            system.spark.config.defaults.spark.executor.memory = "5120m"
+                            system.spark.config.env.SPARK_EXECUTOR_MEMORY = "5120m"
+                            system.spark.config.env.SPARK_WORKER_MEMORY = "5120m"
+                        </value>
+                    </constructor-arg>
+                </bean>
+                <bean parent="experiment.spark.kmeans.D3K8.40m">
+                    <constructor-arg name="name" value="kmeans.D3K8.40m.dop64.mem10G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 12000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.spark.config.defaults.spark.default.parallelism = 64
+                            system.spark.config.defaults.spark.executor.memory = "10240m"
+                            system.spark.config.env.SPARK_EXECUTOR_MEMORY = "10240m"
+                            system.spark.config.env.SPARK_WORKER_MEMORY = "10240m"
+                        </value>
+                    </constructor-arg>
+                </bean>
+                <bean parent="experiment.spark.kmeans.D3K8.40m">
+                    <constructor-arg name="name" value="kmeans.D3K8.40m.dop64.mem20G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 12000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.spark.config.defaults.spark.default.parallelism = 64
+                            system.spark.config.defaults.spark.executor.memory = "20480m"
+                            system.spark.config.env.SPARK_EXECUTOR_MEMORY = "20480m"
+                            system.spark.config.env.SPARK_WORKER_MEMORY = "20480m"
+                        </value>
+                    </constructor-arg>
+                </bean>
+                <bean parent="experiment.spark.kmeans.D3K8.40m">
+                    <constructor-arg name="name" value="kmeans.D3K8.40m.dop48.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 12000
+                            system.default.config.slaves = [ "cloud-8", "cloud-9", "cloud-10" ]
+                            system.spark.config.defaults.spark.default.parallelism = 48
+                            system.spark.config.defaults.spark.executor.memory = "36864m"
+                            system.spark.config.env.SPARK_EXECUTOR_MEMORY = "36864m"
+                            system.spark.config.env.SPARK_WORKER_MEMORY = "36864m"
+                        </value>
+                    </constructor-arg>
+                </bean>
+                <bean parent="experiment.spark.kmeans.D3K8.40m">
+                    <constructor-arg name="name" value="kmeans.D3K8.40m.dop32.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 12000
+                            system.default.config.slaves = [ "cloud-9", "cloud-10" ]
+                            system.spark.config.defaults.spark.default.parallelism = 32
+                            system.spark.config.defaults.spark.executor.memory = "36864m"
+                            system.spark.config.env.SPARK_EXECUTOR_MEMORY = "36864m"
+                            system.spark.config.env.SPARK_WORKER_MEMORY = "36864m"
+                        </value>
+                    </constructor-arg>
+                </bean>
+                <bean parent="experiment.spark.kmeans.D3K8.40m">
+                    <constructor-arg name="name" value="kmeans.D3K8.40m.dop16.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 12000
+                            system.default.config.slaves = [ "cloud-10" ]
+                            system.spark.config.defaults.spark.default.parallelism = 16
+                            system.spark.config.defaults.spark.executor.memory = "36864m"
+                            system.spark.config.env.SPARK_EXECUTOR_MEMORY = "36864m"
+                            system.spark.config.env.SPARK_WORKER_MEMORY = "36864m"
+                        </value>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+
+    <!-- KMeans High Dimension -->
+      <bean id="kmeans.flink.D1000K200.100k.default" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.flink.kmeans.D1000K200.100k">
+                    <constructor-arg name="name" value="kmeans.D1000K200.100k.single-run"/>
+                    <constructor-arg name="runs" value="1"/>
+                    <constructor-arg name="config">
+                        <value/>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="kmeans.flink.D1000K200.100k.cloud-7" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.flink.kmeans.D1000K200.100k">
+                    <constructor-arg name="name" value="kmeans.D1000K200.100k.dop64.men36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 12000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.flink.config.yaml.parallelization.degree.default = 64
+                            system.flink.config.yaml.taskmanager.heap.mb = 36863
+                        </value>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="kmeans.flink.D1000K200.200k.default" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.flink.kmeans.D1000K200.200k">
+                    <constructor-arg name="name" value="kmeans.D1000K200.200k.single-run"/>
+                    <constructor-arg name="runs" value="1"/>
+                    <constructor-arg name="config">
+                        <value/>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="kmeans.flink.D1000K200.200k.cloud-7" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.flink.kmeans.D1000K200.200k">
+                    <constructor-arg name="name" value="kmeans.D1000K200.200k.dop64.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 12000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.flink.config.yaml.parallelization.degree.default = 64
+                            system.flink.config.yaml.taskmanager.heap.mb = 36863
+                        </value>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="kmeans.flink.D1000K200.300k.default" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.flink.kmeans.D1000K200.300k">
+                    <constructor-arg name="name" value="kmeans.D1000K200.300k.single-run"/>
+                    <constructor-arg name="runs" value="1"/>
+                    <constructor-arg name="config">
+                        <value/>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="kmeans.flink.D1000K200.300k.cloud-7" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.flink.kmeans.D1000K200.300k">
+                    <constructor-arg name="name" value="kmeans.D1000K200.300k.dop64.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 12000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.flink.config.yaml.parallelization.degree.default = 64
+                            system.flink.config.yaml.taskmanager.heap.mb = 36863
+                        </value>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="kmeans.flink.D1000K200.400k.default" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.flink.kmeans.D1000K200.400k">
+                    <constructor-arg name="name" value="kmeans.D1000K200.400k.single-run"/>
+                    <constructor-arg name="runs" value="1"/>
+                    <constructor-arg name="config">
+                        <value/>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="kmeans.flink.D1000K200.400k.cloud-7" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.flink.kmeans.D1000K200.400k">
+                    <constructor-arg name="name" value="kmeans.D1000K200.400k.dop64.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 12000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.flink.config.yaml.parallelization.degree.default = 64
+                            system.flink.config.yaml.taskmanager.heap.mb = 36863
+                        </value>
+                    </constructor-arg>
+                </bean>
+                <bean parent="experiment.flink.kmeans.D1000K200.400k">
+                    <constructor-arg name="name" value="kmeans.D1000K200.400k.dop64.mem5G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 12000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.flink.config.yaml.parallelization.degree.default = 64
+                            system.flink.config.yaml.taskmanager.heap.mb = 5120
+                        </value>
+                    </constructor-arg>
+                </bean>
+                <bean parent="experiment.flink.kmeans.D1000K200.400k">
+                    <constructor-arg name="name" value="kmeans.D1000K200.400k.dop64.mem10G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 12000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.flink.config.yaml.parallelization.degree.default = 64
+                            system.flink.config.yaml.taskmanager.heap.mb = 10240
+                        </value>
+                    </constructor-arg>
+                </bean>
+                <bean parent="experiment.flink.kmeans.D1000K200.400k">
+                    <constructor-arg name="name" value="kmeans.D1000K200.400k.dop64.mem20G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 12000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.flink.config.yaml.parallelization.degree.default = 64
+                            system.flink.config.yaml.taskmanager.heap.mb = 20480
+                        </value>
+                    </constructor-arg>
+                </bean>
+                <bean parent="experiment.flink.kmeans.D1000K200.400k">
+                    <constructor-arg name="name" value="kmeans.D1000K200.400k.dop48.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 12000
+                            system.default.config.slaves = [ "cloud-8", "cloud-9", "cloud-10" ]
+                            system.flink.config.yaml.parallelization.degree.default = 48
+                            system.flink.config.yaml.taskmanager.heap.mb = 36863
+                        </value>
+                    </constructor-arg>
+                </bean>
+                <bean parent="experiment.flink.kmeans.D1000K200.400k">
+                    <constructor-arg name="name" value="kmeans.D1000K200.400k.dop32.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 12000
+                            system.default.config.slaves = [ "cloud-9", "cloud-10" ]
+                            system.flink.config.yaml.parallelization.degree.default = 32
+                            system.flink.config.yaml.taskmanager.heap.mb = 36863
+                        </value>
+                    </constructor-arg>
+                </bean>
+                <bean parent="experiment.flink.kmeans.D1000K200.400k">
+                    <constructor-arg name="name" value="kmeans.D1000K200.400k.dop16.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 12000
+                            system.default.config.slaves = [ "cloud-10" ]
+                            system.flink.config.yaml.parallelization.degree.default = 16
+                            system.flink.config.yaml.taskmanager.heap.mb = 36863
+                        </value>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="kmeans.spark.D1000K200.100k.default" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.spark.kmeans.D1000K200.100k">
+                    <constructor-arg name="name" value="kmeans.D1000K200.100k.single-run"/>
+                    <constructor-arg name="runs" value="1"/>
+                    <constructor-arg name="config">
+                        <value/>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="kmeans.spark.D1000K200.100k.cloud-7" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.spark.kmeans.D1000K200.100k">
+                    <constructor-arg name="name" value="kmeans.D1000K200.100k.dop64.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 12000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.spark.config.defaults.spark.default.parallelism = 64
+                            system.spark.config.defaults.spark.executor.memory = "36864m"
+                            system.spark.config.env.SPARK_EXECUTOR_MEMORY = "36864m"
+                            system.spark.config.env.SPARK_WORKER_MEMORY = "36864m"
+                        </value>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="kmeans.spark.D1000K200.200k.default" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.spark.kmeans.D1000K200.200k">
+                    <constructor-arg name="name" value="kmeans.D1000K200.200k.single-run"/>
+                    <constructor-arg name="runs" value="1"/>
+                    <constructor-arg name="config">
+                        <value/>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="kmeans.spark.D1000K200.200k.cloud-7" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.spark.kmeans.D1000K200.200k">
+                    <constructor-arg name="name" value="kmeans.D1000K200.200k.dop64.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 12000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.spark.config.defaults.spark.default.parallelism = 64
+                            system.spark.config.defaults.spark.executor.memory = "36864m"
+                            system.spark.config.env.SPARK_EXECUTOR_MEMORY = "36864m"
+                            system.spark.config.env.SPARK_WORKER_MEMORY = "36864m"
+                        </value>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="kmeans.spark.D1000K200.300k.default" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.spark.kmeans.D1000K200.300k">
+                    <constructor-arg name="name" value="kmeans.D1000K200.300k.single-run"/>
+                    <constructor-arg name="runs" value="1"/>
+                    <constructor-arg name="config">
+                        <value/>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="kmeans.spark.D1000K200.300k.cloud-7" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.spark.kmeans.D1000K200.300k">
+                    <constructor-arg name="name" value="kmeans.D1000K200.300k.dop64.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 12000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.spark.config.defaults.spark.default.parallelism = 64
+                            system.spark.config.defaults.spark.executor.memory = "36864m"
+                            system.spark.config.env.SPARK_EXECUTOR_MEMORY = "36864m"
+                            system.spark.config.env.SPARK_WORKER_MEMORY = "36864m"
+                        </value>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="kmeans.spark.D1000K200.400k.default" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.spark.kmeans.D1000K200.400k">
+                    <constructor-arg name="name" value="kmeans.D1000K200.400k.single-run"/>
+                    <constructor-arg name="runs" value="1"/>
+                    <constructor-arg name="config">
+                        <value/>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="kmeans.spark.D1000K200.400k.cloud-7" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.spark.kmeans.D1000K200.400k">
+                    <constructor-arg name="name" value="kmeans.D1000K200.400k.dop64.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 12000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.spark.config.defaults.spark.default.parallelism = 64
+                            system.spark.config.defaults.spark.executor.memory = "36864m"
+                            system.spark.config.env.SPARK_EXECUTOR_MEMORY = "36864m"
+                            system.spark.config.env.SPARK_WORKER_MEMORY = "36864m"
+                        </value>
+                    </constructor-arg>
+                </bean>
+                <bean parent="experiment.spark.kmeans.D1000K200.400k">
+                    <constructor-arg name="name" value="kmeans.D1000K200.400k.dop64.mem5G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 12000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.spark.config.defaults.spark.default.parallelism = 64
+                            system.spark.config.defaults.spark.executor.memory = "5120m"
+                            system.spark.config.env.SPARK_EXECUTOR_MEMORY = "5120m"
+                            system.spark.config.env.SPARK_WORKER_MEMORY = "5120m"
+                        </value>
+                    </constructor-arg>
+                </bean>
+                <bean parent="experiment.spark.kmeans.D1000K200.400k">
+                    <constructor-arg name="name" value="kmeans.D1000K200.400k.dop64.mem10G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 12000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.spark.config.defaults.spark.default.parallelism = 64
+                            system.spark.config.defaults.spark.executor.memory = "10240m"
+                            system.spark.config.env.SPARK_EXECUTOR_MEMORY = "10240m"
+                            system.spark.config.env.SPARK_WORKER_MEMORY = "10240m"
+                        </value>
+                    </constructor-arg>
+                </bean>
+                <bean parent="experiment.spark.kmeans.D1000K200.400k">
+                    <constructor-arg name="name" value="kmeans.D1000K200.400k.dop64.mem20G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 12000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.spark.config.defaults.spark.default.parallelism = 64
+                            system.spark.config.defaults.spark.executor.memory = "20480m"
+                            system.spark.config.env.SPARK_EXECUTOR_MEMORY = "20480m"
+                            system.spark.config.env.SPARK_WORKER_MEMORY = "20480m"
+                        </value>
+                    </constructor-arg>
+                </bean>
+                <bean parent="experiment.spark.kmeans.D1000K200.400k">
+                    <constructor-arg name="name" value="kmeans.D1000K200.400k.dop48.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 12000
+                            system.default.config.slaves = [ "cloud-8", "cloud-9", "cloud-10" ]
+                            system.spark.config.defaults.spark.default.parallelism = 48
+                            system.spark.config.defaults.spark.executor.memory = "36864m"
+                            system.spark.config.env.SPARK_EXECUTOR_MEMORY = "36864m"
+                            system.spark.config.env.SPARK_WORKER_MEMORY = "36864m"
+                        </value>
+                    </constructor-arg>
+                </bean>
+                <bean parent="experiment.spark.kmeans.D1000K200.400k">
+                    <constructor-arg name="name" value="kmeans.D1000K200.400k.dop32.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 12000
+                            system.default.config.slaves = [ "cloud-9", "cloud-10" ]
+                            system.spark.config.defaults.spark.default.parallelism = 32
+                            system.spark.config.defaults.spark.executor.memory = "36864m"
+                            system.spark.config.env.SPARK_EXECUTOR_MEMORY = "36864m"
+                            system.spark.config.env.SPARK_WORKER_MEMORY = "36864m"
+                        </value>
+                    </constructor-arg>
+                </bean>
+                <bean parent="experiment.spark.kmeans.D1000K200.400k">
+                    <constructor-arg name="name" value="kmeans.D1000K200.400k.dop16.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 12000
+                            system.default.config.slaves = [ "cloud-10" ]
+                            system.spark.config.defaults.spark.default.parallelism = 16
+                            system.spark.config.defaults.spark.executor.memory = "36864m"
+                            system.spark.config.env.SPARK_EXECUTOR_MEMORY = "36864m"
+                            system.spark.config.env.SPARK_WORKER_MEMORY = "36864m"
+                        </value>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+ 
+</beans>

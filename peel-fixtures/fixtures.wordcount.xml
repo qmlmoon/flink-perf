@@ -1,0 +1,1132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <!--************************************************************************
+    * Custom Systems
+    *************************************************************************-->
+
+    <!-- Use lifespan "PROVIDED" if you want to start the systems manually   -->
+    <!-- Use lifespan "SUITE" if you want PEEL to deploy to start them       -->
+
+    <!-- Hadoop Distributed File System (overridden 'hdfs-1' bean) -->
+    <bean id="hdfs-1" class="eu.stratosphere.peel.extensions.hadoop.beans.system.HDFS1" parent="system">
+        <constructor-arg name="version" value="1.2.1"/>
+        <constructor-arg name="lifespan" value="SUITE"/>
+        <constructor-arg name="dependencies">
+            <set value-type="eu.stratosphere.peel.core.beans.system.System">
+            </set>
+        </constructor-arg>
+    </bean>
+
+    <!-- Hadoop Distributed File System (overridden 'hdfs-2' bean) -->
+   <!--  <bean id="hdfs-2" class="eu.stratosphere.peel.extensions.hadoop.beans.system.HDFS2" parent="system">
+        <constructor-arg name="version" value="2.4.1"/>
+        <constructor-arg name="lifespan" value="SUITE"/>
+        <constructor-arg name="dependencies">
+            <set value-type="eu.stratosphere.peel.core.beans.system.System">
+            </set>
+        </constructor-arg>
+    </bean> -->
+
+    <!-- Flink (overridden 'flink' bean that depends on HDFS1) -->
+    <bean id="flink" class="eu.stratosphere.peel.extensions.flink.beans.system.Flink" parent="system" abstract="true">
+        <constructor-arg name="lifespan" value="SUITE"/>
+        <constructor-arg name="dependencies">
+            <set value-type="eu.stratosphere.peel.core.beans.system.System">
+                <ref bean="hdfs-1"/>
+            </set>
+        </constructor-arg>
+    </bean>
+
+    <!-- Flink (version 0.5.1) -->
+    <bean id="flink-0.7.0" parent="flink">
+        <constructor-arg name="version" value="0.7.0"/>
+    </bean>
+
+    <!-- Spark (overridden spark bean that depends on hdfs -->
+    <bean id="spark" class="eu.stratosphere.peel.extensions.spark.beans.system.Spark" parent="system" abstract="true">
+        <constructor-arg name="lifespan" value="SUITE"/>
+        <constructor-arg name="dependencies">
+            <set value-type="eu.stratosphere.peel.core.beans.system.System.System">
+                <ref bean="hdfs-1"/>
+            </set>
+        </constructor-arg>
+    </bean>
+
+    <!-- Spark (version 1.1) -->
+    <bean id="spark-1.1" parent="spark">
+        <constructor-arg name="version" value="1.1.0"/>
+    </bean>
+
+    <!--************************************************************************
+    * Data Sets
+    *************************************************************************-->
+
+    <!-- Gutenberg -->
+    <bean id="dataset.wc.2G" parent="dataset.static.hdfs-1">
+        <constructor-arg name="src" value="${app.path.datasets}/wc/wc.2G.txt.gz"/>
+        <constructor-arg name="dst" value="${system.hadoop-1.path.input}/wc.2G.txt"/>
+    </bean>
+
+    <bean id="dataset.wc.4G" parent="dataset.static.hdfs-1">
+        <constructor-arg name="src" value="${app.path.datasets}/wc/wc.4G.txt.gz"/>
+        <constructor-arg name="dst" value="${system.hadoop-1.path.input}/wc.4G.txt"/>
+    </bean>
+
+    <bean id="dataset.wc.8G" parent="dataset.static.hdfs-1">
+        <constructor-arg name="src" value="${app.path.datasets}/wc/wc.8G.txt.gz"/>
+        <constructor-arg name="dst" value="${system.hadoop-1.path.input}/wc.8G.txt"/>
+    </bean>
+
+    <bean id="dataset.wc.16G" parent="dataset.static.hdfs-1">
+        <constructor-arg name="src" value="${app.path.datasets}/wc/wc.16G.txt.gz"/>
+        <constructor-arg name="dst" value="${system.hadoop-1.path.input}/wc.16G.txt"/>
+    </bean>
+
+    <!-- WordCount output -->
+    <bean id="experiment.output.hdfs.wc" parent="experiment.output.hdfs-1">
+        <constructor-arg name="path" value="${system.hadoop-1.path.output}/wc"/>
+    </bean>
+
+    <!--************************************************************************
+    * Experiments
+    *************************************************************************-->
+
+    <!-- Experiment beans -->
+    <bean id="experiment.flink" class="eu.stratosphere.peel.extensions.flink.beans.experiment.FlinkExperiment" abstract="true">
+        <constructor-arg name="runner" ref="flink-0.7.0"/>
+        <constructor-arg name="runs" value="5"/>
+    </bean>
+
+    <bean id="experiment.spark" class="eu.stratosphere.peel.extensions.spark.beans.experiment.SparkExperiment" abstract="true">
+        <constructor-arg name="runner" ref="spark-1.1"/>
+        <constructor-arg name="runs" value="5"/>
+    </bean>
+
+
+
+    <bean id="experiment.flink.wc.2G" parent="experiment.flink" abstract="true">
+        <constructor-arg name="command">
+            <value>${system.flink.path.home}/examples/flink-java-examples-0.7-incubating-SNAPSHOT-WordCount.jar ${system.hadoop-1.path.input}/wc.2G.txt ${system.hadoop-1.path.output}/wc</value>
+        </constructor-arg>
+        <constructor-arg name="input">
+            <ref bean="dataset.wc.2G"/>
+        </constructor-arg>
+        <constructor-arg name="output">
+            <ref bean="experiment.output.hdfs.wc"/>
+        </constructor-arg>
+    </bean>
+
+    <bean id="experiment.flink.wc.4G" parent="experiment.flink" abstract="true">
+        <constructor-arg name="command">
+            <value>${system.flink.path.home}/examples/flink-java-examples-0.7-incubating-SNAPSHOT-WordCount.jar ${system.hadoop-1.path.input}/wc.4G.txt ${system.hadoop-1.path.output}/wc</value>
+        </constructor-arg>
+        <constructor-arg name="input">
+            <ref bean="dataset.wc.4G"/>
+        </constructor-arg>
+        <constructor-arg name="output">
+            <ref bean="experiment.output.hdfs.wc"/>
+        </constructor-arg>
+    </bean>
+
+    <bean id="experiment.flink.wc.8G" parent="experiment.flink" abstract="true">
+        <constructor-arg name="command">
+            <value>${system.flink.path.home}/examples/flink-java-examples-0.7-incubating-SNAPSHOT-WordCount.jar ${system.hadoop-1.path.input}/wc.8G.txt ${system.hadoop-1.path.output}/wc</value>
+        </constructor-arg>
+        <constructor-arg name="input">
+            <ref bean="dataset.wc.8G"/>
+        </constructor-arg>
+        <constructor-arg name="output">
+            <ref bean="experiment.output.hdfs.wc"/>
+        </constructor-arg>
+    </bean>
+
+    <bean id="experiment.flink.wc.16G" parent="experiment.flink" abstract="true">
+        <constructor-arg name="command">
+            <value>${system.flink.path.home}/examples/flink-java-examples-0.7-incubating-SNAPSHOT-WordCount.jar ${system.hadoop-1.path.input}/wc.16G.txt ${system.hadoop-1.path.output}/wc</value>
+        </constructor-arg>
+        <constructor-arg name="input">
+            <ref bean="dataset.wc.16G"/>
+        </constructor-arg>
+        <constructor-arg name="output">
+            <ref bean="experiment.output.hdfs.wc"/>
+        </constructor-arg>
+    </bean>
+
+    <bean id="experiment.spark.wc.2G" parent="experiment.spark" abstract="true">
+        <constructor-arg name="command">
+            <!-- spark command that is used: spark-submit -->
+            <value>--class com.github.projectflink.spark.WordCount ${app.path.jobs}/spark-jobs-0.1-SNAPSHOT-SparkBench.jar ${system.spark.config.defaults.spark.master} ${system.hadoop-1.path.input}/wc.2G.txt ${system.hadoop-1.path.output}/wc</value>
+        </constructor-arg>
+        <constructor-arg name="input">
+            <ref bean="dataset.wc.2G"/>
+        </constructor-arg>
+        <constructor-arg name="output">
+            <ref bean="experiment.output.hdfs.wc"/>
+        </constructor-arg>
+    </bean>
+
+    <bean id="experiment.spark.wc.4G" parent="experiment.spark" abstract="true">
+        <constructor-arg name="command">
+            <!-- spark command that is used: spark-submit -->
+            <value>--class com.github.projectflink.spark.WordCount ${app.path.jobs}/spark-jobs-0.1-SNAPSHOT-SparkBench.jar ${system.spark.config.defaults.spark.master} ${system.hadoop-1.path.input}/wc.4G.txt ${system.hadoop-1.path.output}/wc</value>
+        </constructor-arg>
+        <constructor-arg name="input">
+            <ref bean="dataset.wc.4G"/>
+        </constructor-arg>
+        <constructor-arg name="output">
+            <ref bean="experiment.output.hdfs.wc"/>
+        </constructor-arg>
+    </bean>
+
+    <bean id="experiment.spark.wc.8G" parent="experiment.spark" abstract="true">
+        <constructor-arg name="command">
+            <!-- spark command that is used: spark-submit -->
+            <value>--class com.github.projectflink.spark.WordCount ${app.path.jobs}/spark-jobs-0.1-SNAPSHOT-SparkBench.jar ${system.spark.config.defaults.spark.master} ${system.hadoop-1.path.input}/wc.8G.txt ${system.hadoop-1.path.output}/wc</value>
+        </constructor-arg>
+        <constructor-arg name="input">
+            <ref bean="dataset.wc.8G"/>
+        </constructor-arg>
+        <constructor-arg name="output">
+            <ref bean="experiment.output.hdfs.wc"/>
+        </constructor-arg>
+    </bean>
+
+    <bean id="experiment.spark.wc.16G" parent="experiment.spark" abstract="true">
+        <constructor-arg name="command">
+            <!-- spark command that is used: spark-submit -->
+            <value>--class com.github.projectflink.spark.WordCount ${app.path.jobs}/spark-jobs-0.1-SNAPSHOT-SparkBench.jar ${system.spark.config.defaults.spark.master} ${system.hadoop-1.path.input}/wc.16G.txt ${system.hadoop-1.path.output}/wc</value>
+        </constructor-arg>
+        <constructor-arg name="input">
+            <ref bean="dataset.wc.16G"/>
+        </constructor-arg>
+        <constructor-arg name="output">
+            <ref bean="experiment.output.hdfs.wc"/>
+        </constructor-arg>
+    </bean>     
+
+    <!-- WordCount No Combiner -->
+    <bean id="experiment.flink.wcnocombiner.2G" parent="experiment.flink" abstract="true">
+        <constructor-arg name="command">
+            <value>-c com.github.projectflink.testPlan.WordCountWithoutCombine ${app.path.jobs}/flink-jobs-0.1-SNAPSHOT-FlinkBench.jar ${system.hadoop-1.path.input}/wc.2G.txt ${system.hadoop-1.path.output}/wc</value>
+        </constructor-arg>
+        <constructor-arg name="input">
+            <ref bean="dataset.wc.2G"/>
+        </constructor-arg>
+        <constructor-arg name="output">
+            <ref bean="experiment.output.hdfs.wc"/>
+        </constructor-arg>
+    </bean>
+
+    <bean id="experiment.flink.wcnocombiner.4G" parent="experiment.flink" abstract="true">
+        <constructor-arg name="command">
+            <value>-c com.github.projectflink.testPlan.WordCountWithoutCombine ${app.path.jobs}/flink-jobs-0.1-SNAPSHOT-FlinkBench.jar ${system.hadoop-1.path.input}/wc.4G.txt ${system.hadoop-1.path.output}/wc</value>
+        </constructor-arg>
+        <constructor-arg name="input">
+            <ref bean="dataset.wc.4G"/>
+        </constructor-arg>
+        <constructor-arg name="output">
+            <ref bean="experiment.output.hdfs.wc"/>
+        </constructor-arg>
+    </bean>
+
+    <bean id="experiment.flink.wcnocombiner.8G" parent="experiment.flink" abstract="true">
+        <constructor-arg name="command">
+            <value>-c com.github.projectflink.testPlan.WordCountWithoutCombine ${app.path.jobs}/flink-jobs-0.1-SNAPSHOT-FlinkBench.jar ${system.hadoop-1.path.input}/wc.8G.txt ${system.hadoop-1.path.output}/wc</value>
+        </constructor-arg>
+        <constructor-arg name="input">
+            <ref bean="dataset.wc.8G"/>
+        </constructor-arg>
+        <constructor-arg name="output">
+            <ref bean="experiment.output.hdfs.wc"/>
+        </constructor-arg>
+    </bean>
+
+    <bean id="experiment.flink.wcnocombiner.16G" parent="experiment.flink" abstract="true">
+        <constructor-arg name="command">
+            <value>-c com.github.projectflink.testPlan.WordCountWithoutCombine ${app.path.jobs}/flink-jobs-0.1-SNAPSHOT-FlinkBench.jar ${system.hadoop-1.path.input}/wc.16G.txt ${system.hadoop-1.path.output}/wc</value>
+        </constructor-arg>
+        <constructor-arg name="input">
+            <ref bean="dataset.wc.16G"/>
+        </constructor-arg>
+        <constructor-arg name="output">
+            <ref bean="experiment.output.hdfs.wc"/>
+        </constructor-arg>
+    </bean>
+
+    <bean id="experiment.spark.wcnocombiner.2G" parent="experiment.spark" abstract="true">
+        <constructor-arg name="command">
+            <!-- spark command that is used: spark-submit -->
+            <value>--class com.github.projectflink.spark.WordCountGrouping ${app.path.jobs}/spark-jobs-0.1-SNAPSHOT-SparkBench.jar ${system.spark.config.defaults.spark.master} ${system.hadoop-1.path.input}/wc.2G.txt ${system.hadoop-1.path.output}/wc</value>
+        </constructor-arg>
+        <constructor-arg name="input">
+            <ref bean="dataset.wc.2G"/>
+        </constructor-arg>
+        <constructor-arg name="output">
+            <ref bean="experiment.output.hdfs.wc"/>
+        </constructor-arg>
+    </bean>
+
+    <bean id="experiment.spark.wcnocombiner.4G" parent="experiment.spark" abstract="true">
+        <constructor-arg name="command">
+            <!-- spark command that is used: spark-submit -->
+            <value>--class com.github.projectflink.spark.WordCountGrouping ${app.path.jobs}/spark-jobs-0.1-SNAPSHOT-SparkBench.jar ${system.spark.config.defaults.spark.master} ${system.hadoop-1.path.input}/wc.4G.txt ${system.hadoop-1.path.output}/wc</value>
+        </constructor-arg>
+        <constructor-arg name="input">
+            <ref bean="dataset.wc.4G"/>
+        </constructor-arg>
+        <constructor-arg name="output">
+            <ref bean="experiment.output.hdfs.wc"/>
+        </constructor-arg>
+    </bean>
+
+    <bean id="experiment.spark.wcnocombiner.8G" parent="experiment.spark" abstract="true">
+        <constructor-arg name="command">
+            <!-- spark command that is used: spark-submit -->
+            <value>--class com.github.projectflink.spark.WordCountGrouping ${app.path.jobs}/spark-jobs-0.1-SNAPSHOT-SparkBench.jar ${system.spark.config.defaults.spark.master} ${system.hadoop-1.path.input}/wc.8G.txt ${system.hadoop-1.path.output}/wc</value>
+        </constructor-arg>
+        <constructor-arg name="input">
+            <ref bean="dataset.wc.8G"/>
+        </constructor-arg>
+        <constructor-arg name="output">
+            <ref bean="experiment.output.hdfs.wc"/>
+        </constructor-arg>
+    </bean>
+
+    <bean id="experiment.spark.wcnocombiner.16G" parent="experiment.spark" abstract="true">
+        <constructor-arg name="command">
+            <!-- spark command that is used: spark-submit -->
+            <value>--class com.github.projectflink.spark.WordCountGrouping ${app.path.jobs}/spark-jobs-0.1-SNAPSHOT-SparkBench.jar ${system.spark.config.defaults.spark.master} ${system.hadoop-1.path.input}/wc.16G.txt ${system.hadoop-1.path.output}/wc</value>
+        </constructor-arg>
+        <constructor-arg name="input">
+            <ref bean="dataset.wc.16G"/>
+        </constructor-arg>
+        <constructor-arg name="output">
+            <ref bean="experiment.output.hdfs.wc"/>
+        </constructor-arg>
+    </bean>   
+
+    <!--************************************************************************
+    * Fixtures
+    *************************************************************************-->
+
+    <bean id="wc.flink.2G.default" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.flink.wc.2G">
+                    <constructor-arg name="name" value="wc.2G.single-run"/>
+                    <constructor-arg name="runs" value="1"/>
+                    <constructor-arg name="config">
+                        <value/>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="wc.flink.2G.cloud-7" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.flink.wc.2G">
+                    <constructor-arg name="name" value="wc.2G.dop64.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 6000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.flink.config.yaml.parallelization.degree.default = 64
+                            system.flink.config.yaml.taskmanager.heap.mb = 36863
+                        </value>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="wc.flink.4G.default" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.flink.wc.4G">
+                    <constructor-arg name="name" value="wc.4G.single-run"/>
+                    <constructor-arg name="runs" value="1"/>
+                    <constructor-arg name="config">
+                        <value/>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="wc.flink.4G.cloud-7" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.flink.wc.4G">
+                    <constructor-arg name="name" value="wc.4G.dop64.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 6000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.flink.config.yaml.parallelization.degree.default = 64
+                            system.flink.config.yaml.taskmanager.heap.mb = 36863
+                        </value>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="wc.flink.8G.default" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.flink.wc.8G">
+                    <constructor-arg name="name" value="wc.8G.single-run"/>
+                    <constructor-arg name="runs" value="1"/>
+                    <constructor-arg name="config">
+                        <value/>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="wc.flink.8G.cloud-7" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.flink.wc.8G">
+                    <constructor-arg name="name" value="wc.8G.dop64.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 6000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.flink.config.yaml.parallelization.degree.default = 64
+                            system.flink.config.yaml.taskmanager.heap.mb = 36863
+                        </value>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="wc.flink.16G.default" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.flink.wc.16G">
+                    <constructor-arg name="name" value="wc.16G.single-run"/>
+                    <constructor-arg name="runs" value="1"/>
+                    <constructor-arg name="config">
+                        <value/>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="wc.flink.16G.cloud-7" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.flink.wc.16G">
+                    <constructor-arg name="name" value="wc.16G.dop64.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 6000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.flink.config.yaml.parallelization.degree.default = 64
+                            system.flink.config.yaml.taskmanager.heap.mb = 36863
+                        </value>
+                    </constructor-arg>
+                </bean>
+                <bean parent="experiment.flink.wc.16G">
+                    <constructor-arg name="name" value="wc.16G.dop64.mem5G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 6000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.flink.config.yaml.parallelization.degree.default = 64
+                            system.flink.config.yaml.taskmanager.heap.mb = 5120
+                        </value>
+                    </constructor-arg>
+                </bean>
+                <bean parent="experiment.flink.wc.16G">
+                    <constructor-arg name="name" value="wc.16G.dop64.mem10G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 6000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.flink.config.yaml.parallelization.degree.default = 64
+                            system.flink.config.yaml.taskmanager.heap.mb = 10240
+                        </value>
+                    </constructor-arg>
+                </bean>
+                <bean parent="experiment.flink.wc.16G">
+                    <constructor-arg name="name" value="wc.16G.dop64.mem20G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 6000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.flink.config.yaml.parallelization.degree.default = 64
+                            system.flink.config.yaml.taskmanager.heap.mb = 20480
+                        </value>
+                    </constructor-arg>
+                </bean>
+                <bean parent="experiment.flink.wc.16G">
+                    <constructor-arg name="name" value="wc.16G.dop48.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 6000
+                            system.default.config.slaves = [ "cloud-8", "cloud-9", "cloud-10" ]
+                            system.flink.config.yaml.parallelization.degree.default = 48
+                            system.flink.config.yaml.taskmanager.heap.mb = 36863
+                        </value>
+                    </constructor-arg>
+                </bean>
+                <bean parent="experiment.flink.wc.16G">
+                    <constructor-arg name="name" value="wc.16G.dop32.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 6000
+                            system.default.config.slaves = [ "cloud-9", "cloud-10" ]
+                            system.flink.config.yaml.parallelization.degree.default = 32
+                            system.flink.config.yaml.taskmanager.heap.mb = 36863
+                        </value>
+                    </constructor-arg>
+                </bean>
+                <bean parent="experiment.flink.wc.16G">
+                    <constructor-arg name="name" value="wc.16G.dop16.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 6000
+                            system.default.config.slaves = [ "cloud-10" ]
+                            system.flink.config.yaml.parallelization.degree.default = 16
+                            system.flink.config.yaml.taskmanager.heap.mb = 36863
+                        </value>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="wc.spark.2G.default" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.spark.wc.2G">
+                    <constructor-arg name="name" value="wc.2G.single-run"/>
+                    <constructor-arg name="runs" value="1"/>
+                    <constructor-arg name="config">
+                        <value/>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="wc.spark.2G.cloud-7" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.spark.wc.2G">
+                    <constructor-arg name="name" value="wc.2G.dop64.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 6000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.spark.config.defaults.spark.default.parallelism = 64
+                            system.spark.config.defaults.spark.executor.memory = "36864m"
+                            system.spark.config.env.SPARK_EXECUTOR_MEMORY = "36864m"
+                            system.spark.config.env.SPARK_WORKER_MEMORY = "36864m"
+                        </value>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="wc.spark.4G.default" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.spark.wc.4G">
+                    <constructor-arg name="name" value="wc.4G.single-run"/>
+                    <constructor-arg name="runs" value="1"/>
+                    <constructor-arg name="config">
+                        <value/>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="wc.spark.4G.cloud-7" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.spark.wc.4G">
+                    <constructor-arg name="name" value="wc.4G.dop64.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 6000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.spark.config.defaults.spark.default.parallelism = 64
+                            system.spark.config.defaults.spark.executor.memory = "36864m"
+                            system.spark.config.env.SPARK_EXECUTOR_MEMORY = "36864m"
+                            system.spark.config.env.SPARK_WORKER_MEMORY = "36864m"
+                        </value>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="wc.spark.8G.default" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.spark.wc.8G">
+                    <constructor-arg name="name" value="wc.8G.single-run"/>
+                    <constructor-arg name="runs" value="1"/>
+                    <constructor-arg name="config">
+                        <value/>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="wc.spark.8G.cloud-7" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.spark.wc.8G">
+                    <constructor-arg name="name" value="wc.8G.dop64.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 6000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.spark.config.defaults.spark.default.parallelism = 64
+                            system.spark.config.defaults.spark.executor.memory = "36864m"
+                            system.spark.config.env.SPARK_EXECUTOR_MEMORY = "36864m"
+                            system.spark.config.env.SPARK_WORKER_MEMORY = "36864m"
+                        </value>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="wc.spark.16G.default" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.spark.wc.16G">
+                    <constructor-arg name="name" value="wc.16G.single-run"/>
+                    <constructor-arg name="runs" value="1"/>
+                    <constructor-arg name="config">
+                        <value/>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="wc.spark.16G.cloud-7" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.spark.wc.16G">
+                    <constructor-arg name="name" value="wc.16G.dop64.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 6000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.spark.config.defaults.spark.default.parallelism = 64
+                            system.spark.config.defaults.spark.executor.memory = "36864m"
+                            system.spark.config.env.SPARK_EXECUTOR_MEMORY = "36864m"
+                            system.spark.config.env.SPARK_WORKER_MEMORY = "36864m"
+                        </value>
+                    </constructor-arg>
+                </bean>
+                <bean parent="experiment.spark.wc.16G">
+                    <constructor-arg name="name" value="wc.16G.dop64.mem5G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 6000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.spark.config.defaults.spark.default.parallelism = 64
+                            system.spark.config.defaults.spark.executor.memory = "5120m"
+                            system.spark.config.env.SPARK_EXECUTOR_MEMORY = "5120m"
+                            system.spark.config.env.SPARK_WORKER_MEMORY = "5120m"
+                        </value>
+                    </constructor-arg>
+                </bean>
+                <bean parent="experiment.spark.wc.16G">
+                    <constructor-arg name="name" value="wc.16G.dop64.mem10G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 6000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.spark.config.defaults.spark.default.parallelism = 64
+                            system.spark.config.defaults.spark.executor.memory = "10240m"
+                            system.spark.config.env.SPARK_EXECUTOR_MEMORY = "10240m"
+                            system.spark.config.env.SPARK_WORKER_MEMORY = "10240m"
+                        </value>
+                    </constructor-arg>
+                </bean>
+                <bean parent="experiment.spark.wc.16G">
+                    <constructor-arg name="name" value="wc.16G.dop64.mem20G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 6000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.spark.config.defaults.spark.default.parallelism = 64
+                            system.spark.config.defaults.spark.executor.memory = "20480m"
+                            system.spark.config.env.SPARK_EXECUTOR_MEMORY = "20480m"
+                            system.spark.config.env.SPARK_WORKER_MEMORY = "20480m"
+                        </value>
+                    </constructor-arg>
+                </bean>
+                <bean parent="experiment.spark.wc.16G">
+                    <constructor-arg name="name" value="wc.16G.dop48.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 6000
+                            system.default.config.slaves = [ "cloud-8", "cloud-9", "cloud-10" ]
+                            system.spark.config.defaults.spark.default.parallelism = 48
+                            system.spark.config.defaults.spark.executor.memory = "36864m"
+                            system.spark.config.env.SPARK_EXECUTOR_MEMORY = "36864m"
+                            system.spark.config.env.SPARK_WORKER_MEMORY = "36864m"
+                        </value>
+                    </constructor-arg>
+                </bean>
+                <bean parent="experiment.spark.wc.16G">
+                    <constructor-arg name="name" value="wc.16G.dop32.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 6000
+                            system.default.config.slaves = [ "cloud-9", "cloud-10" ]
+                            system.spark.config.defaults.spark.default.parallelism = 32
+                            system.spark.config.defaults.spark.executor.memory = "36864m"
+                            system.spark.config.env.SPARK_EXECUTOR_MEMORY = "36864m"
+                            system.spark.config.env.SPARK_WORKER_MEMORY = "36864m"
+                        </value>
+                    </constructor-arg>
+                </bean>
+                <bean parent="experiment.spark.wc.16G">
+                    <constructor-arg name="name" value="wc.16G.dop16.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 6000
+                            system.default.config.slaves = [ "cloud-10" ]
+                            system.spark.config.defaults.spark.default.parallelism = 16
+                            system.spark.config.defaults.spark.executor.memory = "36864m"
+                            system.spark.config.env.SPARK_EXECUTOR_MEMORY = "36864m"
+                            system.spark.config.env.SPARK_WORKER_MEMORY = "36864m"
+                        </value>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+
+    <!-- WordCount No COmbiner -->
+      <bean id="wcnocombiner.flink.2G.default" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.flink.wcnocombiner.2G">
+                    <constructor-arg name="name" value="wcnocombiner.2G.single-run"/>
+                    <constructor-arg name="runs" value="1"/>
+                    <constructor-arg name="config">
+                        <value/>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="wcnocombiner.flink.2G.cloud-7" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.flink.wcnocombiner.2G">
+                    <constructor-arg name="name" value="wcnocombiner.2G.dop64.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 6000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.flink.config.yaml.parallelization.degree.default = 64
+                            system.flink.config.yaml.taskmanager.heap.mb = 36863
+                        </value>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="wcnocombiner.flink.4G.default" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.flink.wcnocombiner.4G">
+                    <constructor-arg name="name" value="wcnocombiner.4G.single-run"/>
+                    <constructor-arg name="runs" value="1"/>
+                    <constructor-arg name="config">
+                        <value/>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="wcnocombiner.flink.4G.cloud-7" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.flink.wcnocombiner.4G">
+                    <constructor-arg name="name" value="wcnocombiner.4G.dop64.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 6000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.flink.config.yaml.parallelization.degree.default = 64
+                            system.flink.config.yaml.taskmanager.heap.mb = 36863
+                        </value>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="wcnocombiner.flink.8G.default" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.flink.wcnocombiner.8G">
+                    <constructor-arg name="name" value="wcnocombiner.8G.single-run"/>
+                    <constructor-arg name="runs" value="1"/>
+                    <constructor-arg name="config">
+                        <value/>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="wcnocombiner.flink.8G.cloud-7" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.flink.wcnocombiner.8G">
+                    <constructor-arg name="name" value="wcnocombiner.8G.dop64.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 6000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.flink.config.yaml.parallelization.degree.default = 64
+                            system.flink.config.yaml.taskmanager.heap.mb = 36863
+                        </value>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="wcnocombiner.flink.16G.default" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.flink.wcnocombiner.16G">
+                    <constructor-arg name="name" value="wcnocombiner.16G.single-run"/>
+                    <constructor-arg name="runs" value="1"/>
+                    <constructor-arg name="config">
+                        <value/>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="wcnocombiner.flink.16G.cloud-7" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.flink.wcnocombiner.16G">
+                    <constructor-arg name="name" value="wcnocombiner.16G.dop64.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 6000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.flink.config.yaml.parallelization.degree.default = 64
+                            system.flink.config.yaml.taskmanager.heap.mb = 36863
+                        </value>
+                    </constructor-arg>
+                </bean>
+                <bean parent="experiment.flink.wcnocombiner.16G">
+                    <constructor-arg name="name" value="wcnocombiner.16G.dop64.mem5G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 6000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.flink.config.yaml.parallelization.degree.default = 64
+                            system.flink.config.yaml.taskmanager.heap.mb = 5120
+                        </value>
+                    </constructor-arg>
+                </bean>
+                <bean parent="experiment.flink.wcnocombiner.16G">
+                    <constructor-arg name="name" value="wcnocombiner.16G.dop64.mem10G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 6000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.flink.config.yaml.parallelization.degree.default = 64
+                            system.flink.config.yaml.taskmanager.heap.mb = 10240
+                        </value>
+                    </constructor-arg>
+                </bean>
+                <bean parent="experiment.flink.wcnocombiner.16G">
+                    <constructor-arg name="name" value="wcnocombiner.16G.dop64.mem20G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 6000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.flink.config.yaml.parallelization.degree.default = 64
+                            system.flink.config.yaml.taskmanager.heap.mb = 20480
+                        </value>
+                    </constructor-arg>
+                </bean>
+                <bean parent="experiment.flink.wcnocombiner.16G">
+                    <constructor-arg name="name" value="wcnocombiner.16G.dop48.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 6000
+                            system.default.config.slaves = [ "cloud-8", "cloud-9", "cloud-10" ]
+                            system.flink.config.yaml.parallelization.degree.default = 48
+                            system.flink.config.yaml.taskmanager.heap.mb = 36863
+                        </value>
+                    </constructor-arg>
+                </bean>
+                <bean parent="experiment.flink.wcnocombiner.16G">
+                    <constructor-arg name="name" value="wcnocombiner.16G.dop32.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 6000
+                            system.default.config.slaves = [ "cloud-9", "cloud-10" ]
+                            system.flink.config.yaml.parallelization.degree.default = 32
+                            system.flink.config.yaml.taskmanager.heap.mb = 36863
+                        </value>
+                    </constructor-arg>
+                </bean>
+                <bean parent="experiment.flink.wcnocombiner.16G">
+                    <constructor-arg name="name" value="wcnocombiner.16G.dop16.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 6000
+                            system.default.config.slaves = [ "cloud-10" ]
+                            system.flink.config.yaml.parallelization.degree.default = 16
+                            system.flink.config.yaml.taskmanager.heap.mb = 36863
+                        </value>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="wcnocombiner.spark.2G.default" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.spark.wcnocombiner.2G">
+                    <constructor-arg name="name" value="wcnocombiner.2G.single-run"/>
+                    <constructor-arg name="runs" value="1"/>
+                    <constructor-arg name="config">
+                        <value/>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="wcnocombiner.spark.2G.cloud-7" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.spark.wcnocombiner.2G">
+                    <constructor-arg name="name" value="wcnocombiner.2G.dop64.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 6000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.spark.config.defaults.spark.default.parallelism = 64
+                            system.spark.config.defaults.spark.executor.memory = "36864m"
+                            system.spark.config.env.SPARK_EXECUTOR_MEMORY = "36864m"
+                            system.spark.config.env.SPARK_WORKER_MEMORY = "36864m"
+                        </value>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="wcnocombiner.spark.4G.default" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.spark.wcnocombiner.4G">
+                    <constructor-arg name="name" value="wcnocombiner.4G.single-run"/>
+                    <constructor-arg name="runs" value="1"/>
+                    <constructor-arg name="config">
+                        <value/>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="wcnocombiner.spark.4G.cloud-7" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.spark.wcnocombiner.4G">
+                    <constructor-arg name="name" value="wcnocombiner.4G.dop64.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 6000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.spark.config.defaults.spark.default.parallelism = 64
+                            system.spark.config.defaults.spark.executor.memory = "36864m"
+                            system.spark.config.env.SPARK_EXECUTOR_MEMORY = "36864m"
+                            system.spark.config.env.SPARK_WORKER_MEMORY = "36864m"
+                        </value>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="wcnocombiner.spark.8G.default" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.spark.wcnocombiner.8G">
+                    <constructor-arg name="name" value="wcnocombiner.8G.single-run"/>
+                    <constructor-arg name="runs" value="1"/>
+                    <constructor-arg name="config">
+                        <value/>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="wcnocombiner.spark.8G.cloud-7" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.spark.wcnocombiner.8G">
+                    <constructor-arg name="name" value="wcnocombiner.8G.dop64.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 6000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.spark.config.defaults.spark.default.parallelism = 64
+                            system.spark.config.defaults.spark.executor.memory = "36864m"
+                            system.spark.config.env.SPARK_EXECUTOR_MEMORY = "36864m"
+                            system.spark.config.env.SPARK_WORKER_MEMORY = "36864m"
+                        </value>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="wcnocombiner.spark.16G.default" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.spark.wcnocombiner.16G">
+                    <constructor-arg name="name" value="wcnocombiner.16G.single-run"/>
+                    <constructor-arg name="runs" value="1"/>
+                    <constructor-arg name="config">
+                        <value/>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="wcnocombiner.spark.16G.cloud-7" class="eu.stratosphere.peel.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list>
+                <bean parent="experiment.spark.wcnocombiner.16G">
+                    <constructor-arg name="name" value="wcnocombiner.16G.dop64.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 6000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.spark.config.defaults.spark.default.parallelism = 64
+                            system.spark.config.defaults.spark.executor.memory = "36864m"
+                            system.spark.config.env.SPARK_EXECUTOR_MEMORY = "36864m"
+                            system.spark.config.env.SPARK_WORKER_MEMORY = "36864m"
+                        </value>
+                    </constructor-arg>
+                </bean>
+                <bean parent="experiment.spark.wcnocombiner.16G">
+                    <constructor-arg name="name" value="wcnocombiner.16G.dop64.mem5G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 6000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.spark.config.defaults.spark.default.parallelism = 64
+                            system.spark.config.defaults.spark.executor.memory = "5120m"
+                            system.spark.config.env.SPARK_EXECUTOR_MEMORY = "5120m"
+                            system.spark.config.env.SPARK_WORKER_MEMORY = "5120m"
+                        </value>
+                    </constructor-arg>
+                </bean>
+                <bean parent="experiment.spark.wcnocombiner.16G">
+                    <constructor-arg name="name" value="wcnocombiner.16G.dop64.mem10G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 6000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.spark.config.defaults.spark.default.parallelism = 64
+                            system.spark.config.defaults.spark.executor.memory = "10240m"
+                            system.spark.config.env.SPARK_EXECUTOR_MEMORY = "10240m"
+                            system.spark.config.env.SPARK_WORKER_MEMORY = "10240m"
+                        </value>
+                    </constructor-arg>
+                </bean>
+                <bean parent="experiment.spark.wcnocombiner.16G">
+                    <constructor-arg name="name" value="wcnocombiner.16G.dop64.mem20G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 6000
+                            system.default.config.slaves = [ "cloud-7", "cloud-8", "cloud-9", "cloud-10" ]
+                            system.spark.config.defaults.spark.default.parallelism = 64
+                            system.spark.config.defaults.spark.executor.memory = "20480m"
+                            system.spark.config.env.SPARK_EXECUTOR_MEMORY = "20480m"
+                            system.spark.config.env.SPARK_WORKER_MEMORY = "20480m"
+                        </value>
+                    </constructor-arg>
+                </bean>
+                <bean parent="experiment.spark.wcnocombiner.16G">
+                    <constructor-arg name="name" value="wcnocombiner.16G.dop48.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 6000
+                            system.default.config.slaves = [ "cloud-8", "cloud-9", "cloud-10" ]
+                            system.spark.config.defaults.spark.default.parallelism = 48
+                            system.spark.config.defaults.spark.executor.memory = "36864m"
+                            system.spark.config.env.SPARK_EXECUTOR_MEMORY = "36864m"
+                            system.spark.config.env.SPARK_WORKER_MEMORY = "36864m"
+                        </value>
+                    </constructor-arg>
+                </bean>
+                <bean parent="experiment.spark.wcnocombiner.16G">
+                    <constructor-arg name="name" value="wcnocombiner.16G.dop32.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 6000
+                            system.default.config.slaves = [ "cloud-9", "cloud-10" ]
+                            system.spark.config.defaults.spark.default.parallelism = 32
+                            system.spark.config.defaults.spark.executor.memory = "36864m"
+                            system.spark.config.env.SPARK_EXECUTOR_MEMORY = "36864m"
+                            system.spark.config.env.SPARK_WORKER_MEMORY = "36864m"
+                        </value>
+                    </constructor-arg>
+                </bean>
+                <bean parent="experiment.spark.wcnocombiner.16G">
+                    <constructor-arg name="name" value="wcnocombiner.16G.dop16.mem36G"/>
+                    <constructor-arg name="config">
+                        <value>
+                            experiment.timeout = 6000
+                            system.default.config.slaves = [ "cloud-10" ]
+                            system.spark.config.defaults.spark.default.parallelism = 16
+                            system.spark.config.defaults.spark.executor.memory = "36864m"
+                            system.spark.config.env.SPARK_EXECUTOR_MEMORY = "36864m"
+                            system.spark.config.env.SPARK_WORKER_MEMORY = "36864m"
+                        </value>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+</beans>

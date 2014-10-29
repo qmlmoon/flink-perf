@@ -20,6 +20,7 @@
 package com.github.projectflink.testPlan;
 
 import org.apache.flink.api.common.functions.*;
+import org.apache.flink.api.common.operators.base.JoinOperatorBase;
 import org.apache.flink.api.java.aggregation.Aggregations;
 import org.apache.flink.api.java.functions.FunctionAnnotation.ConstantFields;
 import org.apache.flink.api.java.functions.FunctionAnnotation.ConstantFieldsFirst;
@@ -69,7 +70,7 @@ public class ConnectedComponentsBulk {
 
 		IterativeDataSet<Tuple2<Integer, Integer>> solutionSet = verticesWithInitialId.iterate(maxIterations);
 		// apply the step logic: join with the edges, select the minimum neighbor, update if the component of the candidate is smaller
-		DataSet<Tuple2<Integer, Integer>> delta = solutionSet.join(edges).where(0).equalTo(0).with(new NeighborWithComponentIDJoin())
+		DataSet<Tuple2<Integer, Integer>> delta = solutionSet.join(edges, JoinOperatorBase.JoinHint.REPARTITION_HASH_FIRST).where(0).equalTo(0).with(new NeighborWithComponentIDJoin())
 			.groupBy(0).aggregate(Aggregations.MIN, 1)
 			.join(solutionSet).where(0).equalTo(0)
 			.with(new ComponentIdFilter());

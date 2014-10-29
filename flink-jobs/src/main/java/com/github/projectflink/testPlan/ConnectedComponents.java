@@ -76,7 +76,7 @@ public class ConnectedComponents implements ProgramDescription {
 			verticesWithInitialId.iterateDelta(verticesWithInitialId, maxIterations, 0);
 
 		// apply the step logic: join with the edges, select the minimum neighbor, update if the component of the candidate is smaller
-		DataSet<Tuple2<Integer, Integer>> changes = iteration.getWorkset().join(edges).where(0).equalTo(0).with(new NeighborWithComponentIDJoin())
+		DataSet<Tuple2<Integer, Integer>> changes = iteration.getWorkset().join(edges, JoinOperatorBase.JoinHint.REPARTITION_HASH_FIRST).where(0).equalTo(0).with(new NeighborWithComponentIDJoin())
 			.groupBy(0).aggregate(Aggregations.MIN, 1)
 			.join(iteration.getSolutionSet()).where(0).equalTo(0)
 			.with(new ComponentIdFilter());
